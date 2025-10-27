@@ -1,0 +1,62 @@
+{
+  "name": "bulk-submit-consumer",
+  "version": "0.1.0",
+  "description": "A minimal Data Consumer for Bulk Submit (PoC) - TypeScript + Express",
+  "main": "src/index.js",
+  "types": "@types/index.d.ts",
+  "scripts": {
+    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
+    "start": "ts-node --transpile-only src/index.ts",
+    "test": "mocha",
+    "test:watch": "mocha --watch",
+    "test:fast": "TS_NODE_TRANSPILE_ONLY=1 mocha",
+    "test:coverage": "nyc --reporter=html --reporter=text --reporter=lcov npm run test",
+    "test:ci": "npm run type-check && npm run test:fast",
+    "type-check": "tsc -p tsconfig.json --noEmit"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/smart-on-fhir/bulk-submit-consumer.git"
+  },
+  "keywords": [
+    "fhir",
+    "bulk",
+    "smart-on-fhir",
+    "consumer"
+  ],
+  "author": "Vladimir Ignatov <vlad.ignatov@gmail.com>",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/smart-on-fhir/bulk-submit-consumer/issues"
+  },
+  "homepage": "https://github.com/smart-on-fhir/bulk-submit-consumer#readme",
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0"
+  },
+  "devDependencies": {
+    "@types/chai": "^5.2.2",
+    "@types/cors": "^2.8.19",
+    "@types/dotenv": "^6.1.1",
+    "@types/express": "^5.0.3",
+    "@types/fhir": "^0.0.41",
+    "@types/mocha": "^10.0.10",
+    "@types/mock-fs": "^4.13.4",
+    "@types/node": "^24.7.0",
+    "@types/supertest": "^6.0.3",
+    "chai": "^6.2.0",
+    "mocha": "^11.7.4",
+    "mock-fs": "^5.5.0",
+    "nock": "^14.0.10",
+    "nyc": "^17.1.0",
+    "source-map-support": "^0.5.21",
+    "supertest": "^7.1.4",
+    "ts-node": "^10.9.2",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.9.3"
+  }
+}
