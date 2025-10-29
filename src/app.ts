@@ -15,10 +15,10 @@ export default function createApp() {
     app.use(cors());
     app.use(express.json({ limit: '1mb' }));
 
-    app.post('/$bulk-submit'              , asyncHandler(bulkSubmitHandler));
-    app.post('/$bulk-submit-status'       , asyncHandler(bulkStatusKickoffHandler));
-    app.get ('/$bulk-submit-status/:id'   , asyncHandler(bulkStatusHandler));
-    app.get ('/jobs/:jobId/file/:fileName', asyncHandler(bulkStatusFileHandler));
+    app.post('/$bulk-submit'               , asyncHandler(bulkSubmitHandler));
+    app.post('/$bulk-submit-status'        , asyncHandler(bulkStatusKickoffHandler));
+    app.get ('/$bulk-submit-status/:id'    , asyncHandler(bulkStatusHandler));
+    app.get ('/jobs/:jobId/files/:fileName', bulkStatusFileHandler);
 
     // Global express error handler
     app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
