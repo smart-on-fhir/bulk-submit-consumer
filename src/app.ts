@@ -1,10 +1,11 @@
-import express, { NextFunction, Request, Response } from 'express';
 import cors                                         from 'cors';
+import express, { NextFunction, Request, Response } from 'express';
+import serveIndex                                   from 'serve-index';
 import { asyncHandler, createOperationOutcome }     from './utils';
-import bulkSubmitHandler        from './bulkSubmitHandler';
-import bulkStatusHandler        from './bulkStatusHandler';
-import bulkStatusKickoffHandler from './bulkStatusKickoffHandler';
-import bulkStatusFileHandler    from './bulkStatusFileHandler';
+import bulkSubmitHandler                            from './bulkSubmitHandler';
+import bulkStatusHandler                            from './bulkStatusHandler';
+import bulkStatusKickoffHandler                     from './bulkStatusKickoffHandler';
+// import bulkStatusFileHandler                        from './bulkStatusFileHandler';
 
 
 export default function createApp() {
@@ -18,7 +19,10 @@ export default function createApp() {
     app.post('/$bulk-submit'               , asyncHandler(bulkSubmitHandler));
     app.post('/$bulk-submit-status'        , asyncHandler(bulkStatusKickoffHandler));
     app.get ('/$bulk-submit-status/:id'    , asyncHandler(bulkStatusHandler));
-    app.get ('/jobs/:jobId/files/:fileName', bulkStatusFileHandler);
+    // app.get ('/jobs/:jobId/files/:fileName', bulkStatusFileHandler);
+
+    app.use('/jobs', express.static('jobs', { dotfiles: 'deny', index: false  }));
+    app.use('/jobs', serveIndex('jobs', { icons: true, view: 'details' }));
 
     // Global express error handler
     app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
