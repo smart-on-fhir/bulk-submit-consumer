@@ -1,4 +1,6 @@
 import { Identifier }                from "fhir/r4";
+import { join }                      from "path";
+import { rmdir }                     from "fs";
 import { Submission }                from "./Submission";
 import { SUBMISSION_LIFETIME_HOURS } from "./config";
 
@@ -71,6 +73,11 @@ function cleanup() {
         if (new Date(submission.createdAt) < new Date(Date.now() - SUBMISSION_LIFETIME_HOURS * 60 * 60 * 1000)) {
             const slug = Submission.computeSlug(submission.submissionId, submission.submitter);
             SUBMISSIONS.delete(slug);
+            rmdir(join(__dirname, `../jobs/${submission.submissionId}`), { recursive: true }, (err) => {
+                if (err) {
+                    console.error(`Error deleting submission directory for ${slug}:`, err);
+                }
+            });
         }
     });
 
