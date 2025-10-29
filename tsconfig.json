@@ -6,11 +6,14 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,
-    "outDir": "dist"
+    "outDir": "dist",
+    "lib": ["ESNext", "DOM"],
+    "types": ["node", "chai", "mocha", "./@types"]
   },
   "include": [
     "src",
     "test",
+    "@types"
   ],
   "exclude": [
     "node_modules",
