@@ -1,14 +1,11 @@
 import { debuglog }   from "util";
 import { randomUUID } from "crypto";
-// import { Identifier } from "fhir/r4";
 import BulkDownloader from "./BulkDownloader";
-// import StatusManifest from "./StatusManifest";
 
 
 const debug = debuglog("app:Job")
 
 export interface JobDescriptor {
-    // submitter   : Identifier;
     submissionId: string;
     outputFormat: string;
     manifestUrl : string;
@@ -17,32 +14,26 @@ export interface JobDescriptor {
 
 export class Job {
     readonly jobId: string;
-    // readonly submitter: Identifier;
     readonly submissionId: string;
     readonly outputFormat: string;
     readonly manifestUrl: string;
     readonly createdAt: string;
-    // readonly statusManifest: StatusManifest;
 
     public status: 'pending' | 'in-progress' | 'complete' | 'failed' | 'aborted';
     public progress: number = 0;
     public error: string | null = null;
  
     constructor({
-        // submitter,
         submissionId,
         outputFormat,
         manifestUrl,
-        // kickoffUrl,
     }: JobDescriptor) {
-        this.jobId          = randomUUID();
-        // this.submitter      = submitter;
-        this.submissionId   = submissionId;
-        this.outputFormat   = outputFormat;
-        this.manifestUrl    = manifestUrl;
-        this.status         = 'pending';
-        this.createdAt      = new Date().toISOString();
-        // this.statusManifest = new StatusManifest(kickoffUrl);
+        this.jobId        = randomUUID();
+        this.submissionId = submissionId;
+        this.outputFormat = outputFormat;
+        this.manifestUrl  = manifestUrl;
+        this.status       = 'pending';
+        this.createdAt    = new Date().toISOString();
     }
 
     /**
@@ -97,13 +88,8 @@ export class Job {
             if (downloadComplete) {
                 downloadComplete(url, count);
             }
-            // this.statusManifest.addOutputFile(url, count);
         });
 
         downloader.run(this.manifestUrl);
     }
-
-    // async getStatusManifest(): Promise<ExportManifest> {
-    //     return this.statusManifest.toJSON();
-    // }
 }

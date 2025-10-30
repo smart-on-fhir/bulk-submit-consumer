@@ -12,10 +12,7 @@ describe('BulkDownloader', () => {
     });
 
     it('should emit abort event when aborted', (done) => {
-        const downloader = new BulkDownloader();
-        downloader.on('abort', () => {
-            done();
-        });
+        downloader.on('abort', () => { done(); });
         downloader.abort();
     });
 

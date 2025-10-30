@@ -9,7 +9,7 @@ export class Submission {
     slug: string;
     submissionId: string
     submitter: Identifier;
-    createdAt: string;
+    readonly createdAt: string;
     jobs: Map<string, Job>;
     private _status: 'in-progress' | 'complete' | 'aborted';
     readonly statusManifest: StatusManifest;

@@ -13,9 +13,26 @@ export interface BulkDownloaderEvents {
     "abort"           : (this: BulkDownloader) => void;
     "error"           : (this: BulkDownloader, error: Error) => void;
     "start"           : (this: BulkDownloader) => void;
-    "complete"        : (this: BulkDownloader) => void;
-    "progress"        : (this: BulkDownloader, downloaded: number, total: number) => void;
-    "downloadStart"   : (this: BulkDownloader, url: string) => void;
+
+    /**
+     * Emitted when the manifest and all the files have been downloaded.
+     */
+    "complete": (this: BulkDownloader) => void;
+
+    /**
+     * Emitted after a file is downloaded to report overall progress (how many
+     * files have been downloaded out of total files to download).
+     */
+    "progress": (this: BulkDownloader, downloaded: number, total: number) => void;
+
+    /**
+     * Emitted when a file download starts.
+     */
+    "downloadStart": (this: BulkDownloader, url: string) => void;
+
+    /**
+     * Emitted when a file download completes (even in error cases).
+     */
     "downloadComplete": (this: BulkDownloader, url: string, count: number) => void;
 }
 

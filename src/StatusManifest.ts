@@ -1,3 +1,14 @@
+import { OperationOutcome }      from "fhir/r4";
+import { join }                  from "path";
+import { randomUUID }            from "crypto";
+import { appendFile, mkdir, writeFile } from "fs/promises";
+import { CustomError }           from "./BulkDownloader";
+import { BASE_URL }              from "./config";
+
+
+/**
+ * We  currently only have one manifest per submission.
+ */
 export default class StatusManifest {
     
     /**
@@ -6,8 +17,7 @@ export default class StatusManifest {
      * any matching resources modified up to and including this instant.
      */
     readonly transactionTime: ExportManifest["transactionTime"];
-    
-    request: ExportManifest["request"];
+    readonly request: ExportManifest["request"];
 
     requiresAccessToken: ExportManifest["requiresAccessToken"];
     

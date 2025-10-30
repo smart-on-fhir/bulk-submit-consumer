@@ -154,7 +154,7 @@ export async function request(
 
         // Error response from server
         if (out.response.status >= 400) {
-            out.error = `Request to ${url} failed with status ${out.response.status} ${out.response.statusText}`;
+            out.error = `Request to ${url} failed with status ${out.res.status} ${out.res.statusText}`;
         }
 
         else {
@@ -171,7 +171,7 @@ export async function request(
         }
 
     } catch (err) {
-        console.error(err);
+        // console.error(err);
         out.error = `Request to ${url} failed: ${getErrorMessage(err)}`;
     }
     
