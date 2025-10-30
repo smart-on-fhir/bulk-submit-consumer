@@ -124,7 +124,7 @@ interface ExportManifestFile<Type = string> {
      * have a "contained" array that includes referenced resources of other
      * types.
      */
-    type: Type
+    type?: Type
 
     /**
      * the path to the file. The format of the file SHOULD reflect that
@@ -137,4 +137,57 @@ interface ExportManifestFile<Type = string> {
      * the number of resources in the file, represented as a JSON number.
      */
     count?: number
+
+    extension: {
+        manifestUrl: string;
+        countSeverity: {
+            success: number;
+            error: number;
+        }
+        [key: string]: any;
+    }
+}
+
+interface RequestResult {
+    res     : Response | null
+    request : RequestDescriptor | null,
+    response: ResponseDescriptor | null
+    error   : string | null
+}
+
+interface RequestDescriptor {
+    method  : string,
+    url     : string,
+    headers : Record<string, string>,
+    body    : any
+}
+
+interface ResponseDescriptor {
+    headers   : Record<string, string>,
+    body      : string | any | AsyncGenerator<any>, // text | json | ndjson | null
+    status    : number,
+    statusText: string,
+}
+
+/**
+ * Context provided in CustomError instances.
+ */
+interface CustomErrorContext {
+
+    // Common HTTP error context
+    request?: RequestDescriptor  | null
+    response?: ResponseDescriptor | null
+
+    // Download-specific context
+    filePath?: string;
+    
+    // NDJSON processing context
+    lineNumber?: number;
+
+    // FHIR resource context
+    resource?: any;
+
+    // FHIR issue type (see https://hl7.org/fhir/valueset-issue-type.html)
+    issueType?: string;
+
 }
