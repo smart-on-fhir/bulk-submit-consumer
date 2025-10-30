@@ -1,13 +1,14 @@
 import { createWriteStream } from "fs"
 import { mkdir }             from "fs/promises"
 import { basename, join }    from "path"
-// import { debuglog }          from "util"
 import { EventEmitter }      from "events"
+import { request }           from "./utils"
+import { Resource }          from "fhir/r4"
+import { FhirResources }     from "./FhirResources"
+import CustomError           from "./CustomError"
 
 
 EventEmitter.defaultMaxListeners = 30;
-
-// const debug = debuglog("app:BulkDownloader")
 
 export interface BulkDownloaderEvents {
     "abort"           : (this: BulkDownloader) => void;
@@ -46,10 +47,11 @@ class BulkDownloader extends EventEmitter
     private abortController: AbortController;
     private total: number = 0;
     private downloaded: number = 0;
+    private destinationDir: string;
 
-    constructor()
-    {
+    constructor({ destinationDir }: { destinationDir: string }) {
         super();
+        this.destinationDir = destinationDir;
         this.abortController = new AbortController();
         this.abortController.signal.addEventListener("abort", () => {
             this.emit("abort")
@@ -74,7 +76,17 @@ class BulkDownloader extends EventEmitter
     }
 
     private async downloadManifest(url: string) {
-        return await this.request(url, { parse: true });
+        const { error, response, request: requestResult } = await request(url, { parse: true });
+        if (error) {
+            const customError = new CustomError(`Failed to download manifest: ${error}`, {
+                request : requestResult,
+                response: response,
+                issueType: "not-found"
+            });
+            this.emit("error", customError);
+            throw customError;
+        }
+        return response?.body;
     }
 
     private validateManifest(manifest: ExportManifest) {
@@ -112,86 +124,6 @@ class BulkDownloader extends EventEmitter
         this.emit("complete");
     }
 
-    private async request(uri: string | URL, options: RequestInit & { parse?: boolean } = {}): Promise<Response | any> {
-        const { parse, ...fetchOptions } = options;
-        const _options: RequestInit = {
-            ...fetchOptions,
-            signal: this.abortController.signal,
-            headers: {
-                ...fetchOptions.headers
-            }
-        }
-
-        let response: Response;
-        try {
-            response = await fetch(uri, _options);
-        } catch (error) {
-            // Network or other fetch-related error
-            const err: any = new Error(`Request to ${uri} failed: ${(error as Error).message}`);
-            err.code = (error as any).code;
-            throw err;
-        }
-
-        // Error response from server
-        if (response.status >= 400) {
-            const err: any = new Error(`Request to ${uri} failed with status ${response.status}`);
-            err.code = response.status;
-            err.responseHeaders = response.headers;
-            const text = await response.text();
-            // debug(`Response body: ${text}`);
-            err.body = text;
-            if (response.headers.get("content-type")?.match(/\bjson\b/)) {
-                const json = JSON.parse(text);
-                // debug(`Response JSON: ${JSON.stringify(json)}`);
-                err.body = json;
-            }
-            // debug(`Request error: %s`, err.message);
-            throw err;
-        }
-
-        if (parse) {
-            const contentType = response.headers.get('content-type') || '';
-            if (contentType.includes('application/json')) {
-                return await response.json();
-            } else if (contentType.includes('application/ndjson') || contentType.includes('ndjson')) {
-                return this.streamNDJSON(response);
-            } else {
-                return await response.text();
-            }
-        }
-
-        return response;
-    }
-
-    private async *streamNDJSON(response: Response) {
-        const reader = response.body?.getReader();
-        if (!reader) {
-            throw new Error("Response body is null");
-        }
-
-        const decoder = new TextDecoder("utf-8");
-        let buffer = '';
-        try {
-            while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
-                buffer += decoder.decode(value, { stream: true });
-                let lines = buffer.split('\n');
-                buffer = lines.pop() || ''; // Keep the last incomplete line
-                for (const line of lines) {
-                    if (line.trim()) {
-                        yield JSON.parse(line);
-                    }
-                }
-            }
-            // Process any remaining complete line in buffer
-            if (buffer.trim()) {
-                yield JSON.parse(buffer);
-            }
-        } finally {
-            reader.releaseLock();
-        }
-    }
 
     private async downloadAllFiles(manifest: ExportManifest){
         // this.emit("start");
@@ -224,15 +156,32 @@ class BulkDownloader extends EventEmitter
         }
         let count = 0;
         this.emit("downloadStart", file.url);
+
+        let filepath = '';
+        let requestResult: RequestResult | null = null;
+        let currentResource: Resource | null = null;
+        let issueType = 'processing';
+
         try {
             const filename  = basename(new URL(file.url).pathname);
-            const subfolder = `downloads/${exportType}`;
-            const dir       = join(process.cwd(), subfolder);
-            const filepath  = join(dir, filename);
+            const subfolder = `${this.destinationDir}/${exportType}`;
+            const dir       = join(__dirname, '..', subfolder);
+            filepath        = join(dir, filename);
             await mkdir(dir, { recursive: true });
-            const generator = await this.request(file.url, { parse: true });
+            requestResult = await request(file.url, { parse: true, signal: this.abortController.signal });
+            const { error, response } = requestResult;
+            if (error) throw new Error(error);
+            const generator = response?.body as AsyncGenerator<any>;
             const writeStream = createWriteStream(filepath, { flags: 'a' }); // Append mode
             for await (const obj of generator) {
+                currentResource = obj;
+                issueType = 'processing';
+                try {
+                    this.validateResource(obj);
+                } catch (validationError) {
+                    issueType = 'invalid';
+                    throw validationError
+                }
                 writeStream.write(JSON.stringify(obj) + '\n');
                 count++;
             }
@@ -241,15 +190,30 @@ class BulkDownloader extends EventEmitter
                 writeStream.on('finish', () => resolve());
                 writeStream.on('error', reject);
             });
-            // debug(`Downloaded and parsed ${file.url} to ${filepath}`);
             this.emit("downloadComplete", file.url, count);
         } catch (error) {
-            // debug(`Error downloading file ${file.url}: ${(error as Error).message}`);
-            this.emit("error", error as Error);
-            this.emit("downloadComplete", file.url, count);
-            throw error
+            const customError = new CustomError(`Failed to download file ${basename(file.url)}: ${(error as Error).message}`, {
+                filePath    : filepath,
+                request     : requestResult?.request,
+                response    : requestResult?.response,
+                resource    : currentResource,
+                lineNumber  : currentResource ? count + 1 : undefined,
+                issueType
+            });
+            this.emit("error", customError);
         }
-        // this.emit("downloadComplete", file.url, count);
+    }
+
+    private validateResource(resource: Resource) {
+        if (typeof resource !== 'object' || resource === null) {
+            throw new Error("Resource is not an object");
+        }
+        if (!FhirResources.includes(resource.resourceType)) {
+            throw new Error(`Invalid FHIR resourceType: ${resource.resourceType}`);
+        }
+        if (!resource.id || typeof resource.id !== 'string') {
+            throw new Error("Resource ID is missing or invalid");
+        }
     }
 }
 
