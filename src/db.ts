@@ -1,8 +1,15 @@
 import { Identifier }                from "fhir/r4";
 import { join }                      from "path";
-import { rmdir }                     from "fs";
+import { debuglog }                  from "util";
+import { rm }                        from "fs";
 import { Submission }                from "./Submission";
-import { SUBMISSION_LIFETIME_HOURS } from "./config";
+import {
+    PENDING_SUBMISSION_LIFETIME_HOURS,
+    COMPLETED_SUBMISSION_LIFETIME_HOURS
+} from "./config";
+
+
+const debug = debuglog("app:db");
 
 /**
  * Used to look up submissions in the in-memory database by submissionId and
@@ -68,20 +75,38 @@ export const DB = {
 export default DB;
 
 function cleanup() {
-    SUBMISSIONS.forEach((submission) => {
-        // Delete submissions older than SUBMISSION_LIFETIME_HOURS hours
-        if (new Date(submission.createdAt) < new Date(Date.now() - SUBMISSION_LIFETIME_HOURS * 60 * 60 * 1000)) {
-            const slug = Submission.computeSlug(submission.submissionId, submission.submitter);
-            SUBMISSIONS.delete(slug);
-            rmdir(join(__dirname, `../jobs/${submission.submissionId}`), { recursive: true }, (err) => {
-                if (err) {
-                    console.error(`Error deleting submission directory for ${slug}:`, err);
-                }
-            });
-        }
-    });
+    if (SUBMISSIONS.size > 0) {
+        SUBMISSIONS.forEach((submission) => {
 
-    setTimeout(cleanup, Math.round(SUBMISSION_LIFETIME_HOURS * 60 * 60 * 1000)).unref();
+            // Different thresholds for completed vs pending submissions
+            const threshold = submission.status === 'complete'
+                ? new Date(Date.now() - Math.ceil(COMPLETED_SUBMISSION_LIFETIME_HOURS * 60 * 60 * 1000))
+                : new Date(Date.now() - Math.ceil(PENDING_SUBMISSION_LIFETIME_HOURS   * 60 * 60 * 1000));
+
+            if (new Date(submission.createdAt) < threshold) {
+                debug(`Cleaning up submission ${submission.submissionId} created at ${submission.createdAt}`);
+                const slug = Submission.computeSlug(submission.submissionId, submission.submitter);
+                SUBMISSIONS.delete(slug);
+                rm(join(__dirname, `../jobs/${submission.submissionId}`), { recursive: true }, (err) => {
+                    if (err && err.code !== 'ENOENT') {
+                        console.error(`Error deleting submission directory for ${slug}:`, err);
+                    }
+                });
+            }
+        });
+    }
+    
+    // We may not have any submissions, but still want to clean up old job
+    // directories (happens on server restart or after tests run)
+    else {
+        rm(join(__dirname, `../jobs/`), { recursive: true, maxRetries: 3 }, (err) => {
+            if (err && err.code !== 'ENOENT') {
+                debug(`Error deleting submissions directory:`, err);
+            }
+        });
+    }
+
+    setTimeout(cleanup, 60 * 1000).unref();
 }
 
 // Initial cleanup on startup
