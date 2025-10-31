@@ -42,9 +42,11 @@ export class Job {
      * files
      */
     async start({
-        downloadComplete
+        downloadComplete,
+        onError
     }: {
         downloadComplete?: (url: string, count: number) => void;
+        onError?: (error: Error) => void;
     } = {}) {
         if (this.status === 'in-progress') {
             throw new Error(`Job ${this.jobId} has already been started.`);
@@ -53,7 +55,9 @@ export class Job {
             throw new Error(`Job ${this.jobId} has no manifestUrl.`);
         }
 
-        const downloader = new BulkDownloader();
+        const downloader = new BulkDownloader({
+            destinationDir: `jobs/${this.submissionId}/downloads/${this.jobId}`
+        });
 
         downloader.on("progress", async (downloaded: number, total: number) => {
             this.progress = Math.round((downloaded / total) * 100);
@@ -70,6 +74,7 @@ export class Job {
             this.status = 'failed';
             this.error  = error.message;
             debug(`Job ${this.jobId} failed: ${error.message}`);
+            onError?.(error);
         });
 
         downloader.on("abort", async () => {

@@ -3,6 +3,7 @@ import { hashString, roundToPrecision } from "./utils";
 import { Job }                          from "./Job";
 import StatusManifest                   from "./StatusManifest";
 import { BASE_URL }                     from "./config";
+import CustomError                      from "./CustomError";
 
 
 export class Submission {
@@ -22,7 +23,7 @@ export class Submission {
         this.createdAt      = new Date().toISOString();
         this._status        = 'in-progress';
         this.jobs           = new Map();
-        this.statusManifest = new StatusManifest(BASE_URL + `/status/${this.slug}`);
+        this.statusManifest = new StatusManifest(BASE_URL + `/status/${this.slug}`, submissionId);
     }
 
     toString() {
@@ -83,7 +84,7 @@ export class Submission {
         this.jobs.forEach((job) => {
             if (job.status === 'pending' || job.status === 'failed' || job.status === 'aborted') {
                 job.start({
-                    downloadComplete: (url, count) => this.statusManifest.addOutputFile(url, count)
+                    onError: (error) => this.statusManifest.addError(error as CustomError, job.manifestUrl!),
                 }).catch(console.error);
             }
         });
