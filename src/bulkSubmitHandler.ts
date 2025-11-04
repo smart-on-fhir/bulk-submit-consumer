@@ -291,7 +291,8 @@ async function completeSubmission({
             submissionId,
             manifestUrl,
             outputFormat,
-            kickoffUrl  : `${BASE_URL}/$bulk-submit`,
+            kickoffUrl: `${BASE_URL}/$bulk-submit`,
+            onError: (error) => submission.statusManifest.addError(error as any, manifestUrl)
         });
     
         submission.addJob(job);

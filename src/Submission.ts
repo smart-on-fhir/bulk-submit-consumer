@@ -83,9 +83,7 @@ export class Submission {
         // TODO: Also mark all associated jobs as in-progress?
         this.jobs.forEach((job) => {
             if (job.status === 'pending' || job.status === 'failed' || job.status === 'aborted') {
-                job.start({
-                    onError: (error) => this.statusManifest.addError(error as CustomError, job.manifestUrl!),
-                }).catch(console.error);
+                job.start();
             }
         });
     }
