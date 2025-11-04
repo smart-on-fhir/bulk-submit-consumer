@@ -126,6 +126,9 @@ export default class StatusManifest {
         // Get the entry and the file path for this manifest URL
         let node = this.error[manifestUrl] || await this.addManifestUrl(manifestUrl);
 
+        // Ensure the directory exists before appending to the file
+        await mkdir(join(node.filePath, '..'), { recursive: true });
+
         // Append the OperationOutcome resource to the ndjson file
         await appendFile(node.filePath, JSON.stringify(operationOutcome) + '\n');
 

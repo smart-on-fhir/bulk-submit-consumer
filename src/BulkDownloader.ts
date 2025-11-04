@@ -72,7 +72,10 @@ class BulkDownloader extends EventEmitter
     }
 
     public abort() {
-        this.abortController.abort()
+        if (this.abortController.signal.aborted) {
+            return;
+        }
+        this.abortController.abort();
     }
 
     private async downloadManifest(url: string) {
@@ -192,6 +195,7 @@ class BulkDownloader extends EventEmitter
             });
             this.emit("downloadComplete", file.url, count);
         } catch (error) {
+            // console.error((error as Error).stack);
             const customError = new CustomError(`Failed to download file ${basename(file.url)}: ${(error as Error).message}`, {
                 filePath    : filepath,
                 request     : requestResult?.request,

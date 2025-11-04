@@ -99,6 +99,7 @@ function cleanup() {
     // We may not have any submissions, but still want to clean up old job
     // directories (happens on server restart or after tests run)
     else {
+        debug(`Cleaning up all job directories`);
         rm(join(__dirname, `../jobs/`), { recursive: true, maxRetries: 3 }, (err) => {
             if (err && err.code !== 'ENOENT') {
                 debug(`Error deleting submissions directory:`, err);
