@@ -1,19 +1,28 @@
-import { createWriteStream } from "fs"
-import { mkdir }             from "fs/promises"
-import { basename, join }    from "path"
-import { EventEmitter }      from "events"
-import { request }           from "./utils"
-import { Resource }          from "fhir/r4"
-import { FhirResources }     from "./FhirResources"
-import CustomError           from "./CustomError"
+import { basename, join }                from "path"
+import { EventEmitter }                  from "events"
+import { Resource }                      from "fhir/r4"
+import { request }                       from "./utils"
+import { FhirResources }                 from "./FhirResources"
+import CustomError                       from "./CustomError"
 
 
 EventEmitter.defaultMaxListeners = 30;
 
 export interface BulkDownloaderEvents {
-    "abort"           : (this: BulkDownloader) => void;
-    "error"           : (this: BulkDownloader, error: Error) => void;
-    "start"           : (this: BulkDownloader) => void;
+    /**
+     * Emitted when the download is aborted.
+     */
+    "abort": (this: BulkDownloader) => void;
+
+    /**
+     * Emitted when an error occurs during downloading or processing.
+     */
+    "error": (this: BulkDownloader, error: Error) => void;
+
+    /**
+     * Emitted when the download starts.
+     */
+    "start": (this: BulkDownloader) => void;
 
     /**
      * Emitted when the manifest and all the files have been downloaded.
@@ -131,8 +140,6 @@ class BulkDownloader extends EventEmitter
             const manifest = await this.downloadManifest(manifestUrl);
             this.validateManifest(manifest);
             await this.downloadAllFiles(manifest);
-            // TODO: Check for more manifests (pagination)
-            // this.emit("complete");
         } catch (error) {
             this.emit("error", error as Error);
         }

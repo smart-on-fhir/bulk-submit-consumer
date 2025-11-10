@@ -30,6 +30,7 @@ export default async function bulkSubmitHandler(req: Request, res: Response) {
         return;
     }
 
+    // submitter ---------------------------------------------------------------
     // Validate the submitter parameter (1..1)
     // The submitter must match a system and code specified by the Data Recipient
     // (coordinated out-of-band or in an implementation guide specific to a use case).
@@ -39,6 +40,7 @@ export default async function bulkSubmitHandler(req: Request, res: Response) {
         return;
     }
 
+    // submissionId ------------------------------------------------------------
     // Validate the submissionId parameter (1..1)
     // The value must be unique for the submitter.
     const submissionIdParam = parameters.parameter.find(p => p.name === 'submissionId');
@@ -47,6 +49,7 @@ export default async function bulkSubmitHandler(req: Request, res: Response) {
         return;
     }
 
+    // submissionStatus --------------------------------------------------------
     // Validate the submissionStatus parameter (0..1)
     // coding - System of http://hl7.org/fhir/uv/bulkdata/ValueSet/submission-status,
     // code of in-progress (default if parameter is omitted), complete or aborted.
