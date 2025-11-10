@@ -2,7 +2,6 @@ import { Identifier }                   from "fhir/r4";
 import { hashString, roundToPrecision } from "./utils";
 import { Job }                          from "./Job";
 import StatusManifest                   from "./StatusManifest";
-import { BASE_URL }                     from "./config";
 
 
 export class Submission {
@@ -22,7 +21,7 @@ export class Submission {
         this.createdAt      = new Date().toISOString();
         this._status        = 'in-progress';
         this.jobs           = new Map();
-        this.statusManifest = new StatusManifest(BASE_URL + `/status/${this.slug}`, submissionId);
+        this.statusManifest = new StatusManifest(submissionId);
     }
 
     toString() {

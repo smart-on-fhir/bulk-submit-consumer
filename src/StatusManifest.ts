@@ -20,8 +20,6 @@ export default class StatusManifest {
 
     readonly submissionId: string;
 
-    readonly request: ExportManifest["request"];
-
     /**
      * This will have one entry per manifestUrl.
      */
@@ -30,9 +28,8 @@ export default class StatusManifest {
         filePath: string;
     }>;
 
-    constructor(kickoffUrl: string, submissionId: string) {
+    constructor(submissionId: string) {
         this.transactionTime = new Date().toISOString();
-        this.request = kickoffUrl;
         this.error = {};
         this.submissionId = submissionId;
     }
@@ -43,7 +40,7 @@ export default class StatusManifest {
                 submissionId: this.submissionId
             },
             transactionTime: this.transactionTime,
-            request: this.request,
+            request: `${BASE_URL}/$bulk-submit-status`,
             requiresAccessToken: false,
             output: [],
             error: Object.values(this.error).map(e => e.entry),
