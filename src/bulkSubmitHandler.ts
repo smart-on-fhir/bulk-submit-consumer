@@ -162,6 +162,11 @@ export default async function bulkSubmitHandler(req: Request, res: Response) {
     if (action === 'replace') {
         return await replaceManifest({
             response: res,
+            submitter: submitterParam.valueIdentifier!,
+            submissionId: submissionIdParam.valueString!,
+            replacesManifestUrl,
+            manifestUrl,
+            outputFormat,
             FHIRBaseUrl
         });
     }
@@ -333,14 +338,72 @@ async function abortSubmission({
 
 async function replaceManifest({
     response,
+    submitter,
+    submissionId,
+    replacesManifestUrl,
+    manifestUrl,
+    outputFormat,
     FHIRBaseUrl
 }: {
     response: Response
+    submitter: Identifier
+    submissionId: string
+    replacesManifestUrl: string,
+    manifestUrl: string
+    outputFormat: string
     FHIRBaseUrl: string
 }) {
-    response.status(400).json(createOperationOutcome({
-        severity   : 'error',
-        code       : 'not-supported',
-        diagnostics: 'Manifest replacement is not yet implemented.'
+    const submission = await DB.submissions.find({ submissionId, submitter });
+    
+    if (!submission) {
+        response.status(404).json(createOperationOutcome({
+            severity   : 'error',
+            code       : 'not-found',
+            diagnostics: 'Submission not found for the given submitter and submissionId'
+        }));
+        return;
+    }
+
+    if (submission.status === 'complete' || submission.status === 'aborted') {
+        response.status(400).json(createOperationOutcome({
+            severity   : 'error',
+            code       : 'invalid',
+            diagnostics: 'Submission is already complete or aborted'
+        }));
+        return;
+    }
+
+    const jobToReplace = submission.getJobs().find((job) => {
+        return job.manifestUrl === replacesManifestUrl;
+    });
+
+    if (!jobToReplace) {
+        response.status(404).json(createOperationOutcome({
+            severity   : 'error',
+            code       : 'not-found',
+            diagnostics: 'Job not found for the given manifestUrl'
+        }));
+        return;
+    }
+
+    const newJob = new Job({
+        submissionId,
+        manifestUrl,
+        outputFormat,
+        kickoffUrl: `${BASE_URL}/$bulk-submit`,
+        onError: (error) => submission.statusManifest.addError(error as any, manifestUrl),
+        FHIRBaseUrl
+    });
+
+    submission.addJob(newJob);
+
+    jobToReplace.abort();
+
+    await submission.statusManifest.removeManifestUrl(replacesManifestUrl);
+
+    response.json(createOperationOutcome({
+        severity   : 'information',
+        code       : 'informational',
+        diagnostics: `Job ${jobToReplace.jobId} replaced successfully with new Job ${newJob.jobId}.`
     }));
 }

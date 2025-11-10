@@ -57,7 +57,7 @@ describe('BulkDownloader', () => {
     });
 
     it('should validate manifest', async () => {
-        const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR });
+        const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR, FHIRBaseUrl: 'http://example.com' });
         const validManifest = {
             transactionTime: "2025-01-01T00:00:00Z",
             request: "http://example.com/export",
@@ -136,7 +136,7 @@ describe('BulkDownloader', () => {
             .get('/patients.ndjson')
             .reply(200, ndjsonData, { 'content-type': 'application/ndjson' });
 
-        const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR });
+        const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR, FHIRBaseUrl: 'http://example.com' });
         await (downloader as any).downloadFile({ file: { url: 'http://example.com/patients.ndjson' }, exportType: 'output' });
 
         // Verify the file contents

@@ -139,19 +139,18 @@ class BulkDownloader extends EventEmitter
         this.emit("complete");
     }
 
-
-    private async downloadAllFiles(manifest: ExportManifest){
-        // this.emit("start");
+    async undoAll(manifestUrl: string) {
+        const manifest: ExportManifest = await this.downloadManifest(manifestUrl);
+        this.validateManifest(manifest);
         const queue: (() => Promise<any>)[] = [];
-        (manifest.output  || []).forEach(file => queue.push(() => this.downloadFile({ file, exportType: "output"  })));
-        (manifest.deleted || []).forEach(file => queue.push(() => this.downloadFile({ file, exportType: "deleted" })));
-        (manifest.error   || []).forEach(file => queue.push(() => this.downloadFile({ file, exportType: "error"   })));
+        (manifest.output  || []).forEach(file => queue.push(() => this.undoFile({ file, exportType: "output"  })));
+        (manifest.deleted || []).forEach(file => queue.push(() => this.undoFile({ file, exportType: "deleted" })));
+        (manifest.error   || []).forEach(file => queue.push(() => this.undoFile({ file, exportType: "error"   })));
         this.total = queue.length;
         for (const task of queue) {
             await task();
-            this.emit("progress", ++this.downloaded, this.total);
         }
-        // this.emit("complete");
+    }
     }
 
     /**

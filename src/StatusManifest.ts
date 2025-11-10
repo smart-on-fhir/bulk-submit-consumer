@@ -1,7 +1,7 @@
 import { OperationOutcome }             from "fhir/r4";
 import { join }                         from "path";
 import { randomUUID }                   from "crypto";
-import { appendFile, mkdir, writeFile } from "fs/promises";
+import { appendFile, mkdir, unlink, writeFile } from "fs/promises";
 import CustomError                      from "./CustomError";
 import { BASE_URL }                     from "./config";
 
@@ -76,6 +76,15 @@ export default class StatusManifest {
         this.error[manifestUrl] = { entry, filePath };
 
         return { entry, filePath };
+    }
+
+    async removeManifestUrl(manifestUrl: string) {
+        if (this.error[manifestUrl]) {
+            // If there is an error file for this manifest URL, delete it
+            await unlink(this.error[manifestUrl].filePath);
+            // Remove the entry from the error map
+            delete this.error[manifestUrl];
+        }
     }
 
     /**
