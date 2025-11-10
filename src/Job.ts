@@ -11,6 +11,7 @@ export interface JobDescriptor {
     manifestUrl : string;
     kickoffUrl  : string;
     FHIRBaseUrl : string;
+    fileRequestHeaders?: Record<string, string>;
     onError?: (error: Error) => void;
 }
 
@@ -34,6 +35,7 @@ export class Job {
         outputFormat,
         manifestUrl,
         FHIRBaseUrl,
+        fileRequestHeaders,
         onError
     }: JobDescriptor) {
         this.jobId        = randomUUID();
@@ -46,6 +48,7 @@ export class Job {
         this.downloader   = new BulkDownloader({
             destinationDir: `jobs/${submissionId}/downloads/${this.jobId}`,
             FHIRBaseUrl,
+            fileRequestHeaders
         });
 
         this.progressEventHandler = this.progressEventHandler.bind(this);
@@ -123,5 +126,6 @@ export class Job {
         this.downloader.off('start'           , this.startEventHandler   );
         this.downloader.off('downloadComplete', this.downloadEventHandler);
         this.downloader.off('error'           , this.errorEventHandler   );
+        this.downloader.undoAll(this.manifestUrl)
     }
 }

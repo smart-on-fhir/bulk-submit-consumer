@@ -49,17 +49,21 @@ class BulkDownloader extends EventEmitter
     private downloaded: number = 0;
     private destinationDir: string;
     private FHIRBaseUrl: string;
+    private fileRequestHeaders: Record<string, string>;
 
     constructor({
         destinationDir,
         FHIRBaseUrl,
+        fileRequestHeaders = {}
     }: {
         destinationDir: string,
         FHIRBaseUrl: string,
+        fileRequestHeaders?: Record<string, string>
     }) {
         super();
         this.destinationDir = destinationDir;
         this.FHIRBaseUrl = FHIRBaseUrl;
+        this.fileRequestHeaders = fileRequestHeaders;
         this.abortController = new AbortController();
         this.abortController.signal.addEventListener("abort", () => {
             this.emit("abort")
@@ -179,7 +183,11 @@ class BulkDownloader extends EventEmitter
             const dir       = join(__dirname, '..', subfolder);
             filepath        = join(dir, filename);
             await mkdir(dir, { recursive: true });
-            requestResult = await request(file.url, { parse: true, signal: this.abortController.signal });
+            requestResult = await request(file.url, {
+                signal,
+                parse: true,
+                headers: this.fileRequestHeaders
+            });
             const { error, response } = requestResult;
             if (error) throw new Error(error);
             const generator = response?.body as AsyncGenerator<any>;
