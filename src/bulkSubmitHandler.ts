@@ -102,7 +102,7 @@ export default async function bulkSubmitHandler(req: Request, res: Response) {
     // FHIRBaseUrl -------------------------------------------------------------
     const fhirBaseUrlParam = parameters.parameter.find(p => p.name === 'FHIRBaseUrl');
     const FHIRBaseUrl = fhirBaseUrlParam?.valueString || fhirBaseUrlParam?.valueUri || "";
-    if (!FHIRBaseUrl) {
+    if (!FHIRBaseUrl && manifestUrl) {
         res.status(400).send('Missing or invalid FHIRBaseUrl parameter');
         return;
     }
