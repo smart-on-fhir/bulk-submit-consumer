@@ -1,9 +1,12 @@
+import { createWriteStream, existsSync } from "fs"
+import { mkdir, unlink }                 from "fs/promises"
 import { basename, join }                from "path"
 import { EventEmitter }                  from "events"
 import { Resource }                      from "fhir/r4"
 import { request }                       from "./utils"
 import { FhirResources }                 from "./FhirResources"
 import CustomError                       from "./CustomError"
+import JobQueue                          from "./JobQueue"
 
 
 EventEmitter.defaultMaxListeners = 30;
@@ -59,6 +62,8 @@ class BulkDownloader extends EventEmitter
     private destinationDir: string;
     private FHIRBaseUrl: string;
     private fileRequestHeaders: Record<string, string>;
+    private queue: JobQueue = new JobQueue();
+    private isAborted: boolean = false;
 
     constructor({
         destinationDir,
@@ -80,7 +85,7 @@ class BulkDownloader extends EventEmitter
     }
 
     get status() {
-        if (this.abortController.signal.aborted) {
+        if (this.isAborted) {
             return 'Download aborted';
         }
         if (this.total === 0) {
@@ -96,11 +101,23 @@ class BulkDownloader extends EventEmitter
         if (this.abortController.signal.aborted) {
             return;
         }
+        this.isAborted = true;
         this.abortController.abort();
+        // Also abort the queue
+        this.queue.abortAll();
+        // Create a new abort controller for potential future operations
+        this.abortController = new AbortController();
+        this.abortController.signal.addEventListener("abort", () => {
+            this.emit("abort")
+        });
     }
 
     private async downloadManifest(url: string) {
-        const { error, response, request: requestResult } = await request(url, { parse: true });
+        const { error, response, request: requestResult } = await request(url, {
+            parse: true,
+            headers: this.fileRequestHeaders,
+            signal: this.abortController.signal
+        });
         if (error) {
             const customError = new CustomError(`Failed to download manifest: ${error}`, {
                 request : requestResult,
@@ -135,6 +152,7 @@ class BulkDownloader extends EventEmitter
     }
     
     async run(manifestUrl: string) {
+        this.isAborted = false;
         this.emit("start");
         try {
             const manifest = await this.downloadManifest(manifestUrl);
@@ -158,6 +176,74 @@ class BulkDownloader extends EventEmitter
             await task();
         }
     }
+
+    async undoFile({
+        file,
+        exportType
+    }: {
+        file: ExportManifestFile;
+        exportType: "output" | "deleted" | "error";
+    }) {
+        try {
+            const filename  = basename(new URL(file.url).pathname);
+            const subfolder = `${this.destinationDir}/${exportType}`;
+            const filepath  = join(__dirname, '..', subfolder, filename);
+            if (existsSync(filepath)) {
+                await unlink(filepath);
+            }
+        } catch (error) {
+            this.emit("error", error as Error);
+        }
+    }
+
+    private async downloadAllFiles(manifest: ExportManifest) {
+
+        // Abort any ongoing downloads and reset the queue
+        this.queue.abortAll();
+
+        // Reset downloaded counter
+        this.downloaded = 0;
+
+        // Compute total files to download
+        this.total =
+            (manifest.output  || []).length +
+            (manifest.deleted || []).length +
+            (manifest.error   || []).length;
+
+        return new Promise<void>((resolve) => {
+
+            this.queue.on("success", () => {
+                this.emit("progress", ++this.downloaded, this.total);
+            });
+
+            this.queue.on("idle", () => {
+                if (this.downloaded === this.total) {
+                    this.queue.removeAllListeners();
+                    resolve();
+                }
+            });
+
+            // Download output files
+            (manifest.output  || []).forEach(
+                file => this.queue.addJob(
+                    (signal) => this.downloadFile({ file, exportType: "output", signal })
+                )
+            );
+
+            // Download deleted files
+            (manifest.deleted || []).forEach(
+                file => this.queue.addJob(
+                    (signal) => this.downloadFile({ file, exportType: "deleted", signal })
+                )
+            );
+
+            // Download error files
+            (manifest.error   || []).forEach(
+                file => this.queue.addJob(
+                    (signal) => this.downloadFile({ file, exportType: "error", signal })
+                )
+            );
+        });
     }
 
     /**
@@ -167,12 +253,14 @@ class BulkDownloader extends EventEmitter
      */
     private async downloadFile({
         file,
-        exportType
+        exportType,
+        signal = this.abortController.signal
     }: {
         file: ExportManifestFile;
         exportType: "output" | "deleted" | "error";
+        signal?: AbortSignal;
     }) {
-        if (this.abortController.signal.aborted) {
+        if (this.isAborted) {
             return;
         }
         let count = 0;
@@ -209,6 +297,11 @@ class BulkDownloader extends EventEmitter
                 }
                 writeStream.write(JSON.stringify(obj) + '\n');
                 count++;
+
+                // If the resource is DocumentReference, download the actual document too
+                if (obj.resourceType === 'DocumentReference') {
+                    await this.downloadDocumentReferenceAttachments(obj, subfolder, file.url);
+                }
             }
             writeStream.end();
             await new Promise<void>((resolve, reject) => {
@@ -226,6 +319,193 @@ class BulkDownloader extends EventEmitter
                 lineNumber  : currentResource ? count + 1 : undefined,
                 issueType
             });
+            this.emit("error", customError);
+        }
+    }
+
+    /**
+     * Downloads all attachments from a DocumentReference resource.
+     * DocumentReference can have multiple content entries, each with one or more attachments.
+     */
+    private async downloadDocumentReferenceAttachments(documentReference: any, subfolder: string, fileUrl: string) {
+        if (!documentReference.content || !Array.isArray(documentReference.content)) {
+            return;
+        }
+
+        for (const content of documentReference.content) {
+            // Check if aborted before processing each attachment
+            if (this.isAborted) {
+                return;
+            }
+
+            const attachment = content.attachment;
+            if (!attachment) continue;
+
+            // Download the attachment if it has a URL
+            if (attachment.url) {
+                await this.downloadAttachment(attachment.url, documentReference.id, subfolder, fileUrl);
+            }
+            // Save inline base64 data if present
+            else if (attachment.data) {
+                await this.saveInlineAttachment(attachment, documentReference.id, subfolder);
+            }
+        }
+    }
+
+    /**
+     * Saves inline base64-encoded attachment data to a file.
+     * Saves it to a "documents" subdirectory within the subfolder.
+     */
+    private async saveInlineAttachment(attachment: any, documentReferenceId: string, subfolder: string) {
+        // Check if aborted before starting
+        if (this.isAborted) {
+            return;
+        }
+
+        try {
+            // Decode the base64 data
+            const base64Data = attachment.data;
+            const buffer = Buffer.from(base64Data, 'base64');
+
+            // Create a filename based on the document reference ID and content type
+            const ext = this.getExtensionFromContentType(attachment.contentType);
+            const filename = `${documentReferenceId}${ext}`;
+            const documentsDir = join(__dirname, '..', subfolder, 'documents');
+            const filepath = join(documentsDir, filename);
+
+            // Create the documents directory if it doesn't exist
+            await mkdir(documentsDir, { recursive: true });
+
+            // Write the buffer to file
+            const writeStream = createWriteStream(filepath);
+            writeStream.write(buffer);
+            writeStream.end();
+
+            await new Promise<void>((resolve, reject) => {
+                writeStream.on('finish', () => resolve());
+                writeStream.on('error', reject);
+            });
+        } catch (error) {
+            // Emit error but don't fail the entire download process
+            const customError = new CustomError(
+                `Failed to save inline attachment for DocumentReference ${documentReferenceId}: ${(error as Error).message}`,
+                {
+                    issueType: 'processing',
+                    resource: { resourceType: 'DocumentReference', id: documentReferenceId }
+                }
+            );
+            this.emit("error", customError);
+        }
+    }
+
+    /**
+     * Gets file extension from MIME content type.
+     */
+    private getExtensionFromContentType(contentType?: string): string {
+        if (!contentType) return '';
+        
+        const mimeToExt: Record<string, string> = {
+            'image/jpeg': '.jpg',
+            'image/jpg': '.jpg',
+            'image/png': '.png',
+            'image/gif': '.gif',
+            'image/bmp': '.bmp',
+            'image/svg+xml': '.svg',
+            'application/pdf': '.pdf',
+            'application/msword': '.doc',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document': '.docx',
+            'text/plain': '.txt',
+            'text/html': '.html',
+            'application/xml': '.xml',
+            'text/xml': '.xml',
+            'application/json': '.json',
+            'text/csv': '.csv',
+        };
+
+        return mimeToExt[contentType] || '';
+    }
+
+    /**
+     * Downloads a single attachment file from a URL.
+     * Saves it to a "documents" subdirectory within the subfolder.
+     */
+    private async downloadAttachment(url: string, documentReferenceId: string, subfolder: string, fileUrl: string) {
+        // Check if aborted before starting
+        if (this.isAborted) {
+            return;
+        }
+
+        try {
+            // Resolve relative URLs:
+            // - URLs starting with '/' are relative to FHIRBaseUrl
+            // - URLs starting with '.' are relative to the DocumentReference file URL
+            // - Absolute URLs (starting with 'http') are used as-is
+            let absoluteUrl: string;
+            if (url.startsWith('http')) {
+                absoluteUrl = url;
+            } else if (url.startsWith('/')) {
+                // Remove trailing slash from FHIRBaseUrl if present
+                const baseUrl = this.FHIRBaseUrl.replace(/\/$/, '');
+                absoluteUrl = `${baseUrl}${url}`;
+            } else if (url.startsWith('.')) {
+                // Relative to the DocumentReference file URL
+                const fileBase = new URL(fileUrl);
+                absoluteUrl = new URL(url, fileBase.href).href;
+            } else {
+                // Default: treat as relative to FHIRBaseUrl
+                const baseUrl = this.FHIRBaseUrl.replace(/\/$/, '');
+                absoluteUrl = `${baseUrl}/${url}`;
+            }
+            
+            // Create a safe filename based on the document reference ID and URL
+            const urlObj = new URL(absoluteUrl);
+            const originalFilename = basename(urlObj.pathname) || `document-${documentReferenceId}`;
+            const documentsDir = join(__dirname, '..', subfolder, 'documents');
+            const filepath = join(documentsDir, originalFilename);
+
+            // Create the documents directory if it doesn't exist
+            await mkdir(documentsDir, { recursive: true });
+
+            console.log(`Downloading attachment from ${absoluteUrl} to ${filepath}. Headers: ${JSON.stringify(this.fileRequestHeaders)}`);
+
+            // Download the file
+            const { error, res } = await request(absoluteUrl, {
+                headers: this.fileRequestHeaders,
+                signal: this.abortController.signal
+            });
+
+            if (error || !res || !res.body) {
+                throw new Error(error || 'Failed to download attachment');
+            }
+
+            // Stream the response body to file
+            const writeStream = createWriteStream(filepath);
+            const reader = res.body.getReader();
+
+            try {
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    writeStream.write(value);
+                }
+                writeStream.end();
+
+                await new Promise<void>((resolve, reject) => {
+                    writeStream.on('finish', () => resolve());
+                    writeStream.on('error', reject);
+                });
+            } finally {
+                reader.releaseLock();
+            }
+        } catch (error) {
+            // Emit error but don't fail the entire download process
+            const customError = new CustomError(
+                `Failed to download attachment from ${url}: ${(error as Error).message}`,
+                {
+                    issueType: 'processing',
+                    resource: { resourceType: 'DocumentReference', id: documentReferenceId }
+                }
+            );
             this.emit("error", customError);
         }
     }
