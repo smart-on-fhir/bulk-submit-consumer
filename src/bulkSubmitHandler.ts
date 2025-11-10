@@ -4,7 +4,7 @@ import { Identifier, Parameters } from "fhir/r4";
 import { createOperationOutcome } from "./utils";
 import DB                         from "./db";
 import { Job }                    from "./Job";
-import { BASE_URL } from "./config";
+import { BASE_URL }               from "./config";
 
 
 const log = debuglog("app:bulkSubmitHandler");
@@ -17,51 +17,6 @@ const log = debuglog("app:bulkSubmitHandler");
  * submissionId combination.
  */
 type SubmissionStatus = 'in-progress' | 'complete' | 'aborted';
-
-/*
-Bulk Submit Operation Specification (Draft IG: https://hackmd.io/@argonaut/rJoqHZrPle)
-
-## Request
-POST [fhir base]/$bulk-submit
-
-The request body SHALL be a FHIR Parameters resource with the following parameters:
-
-| Parameter | Cardinality | Type | Description |
-|-----------|-------------|------|-------------|
-| FHIRBaseUrl | 1..1 | string (url) | Base url to be used by the Data Recipient when resolving relative references in the submitted resources. |
-| fileRequestHeaders | 0..* | part | HTTP headers that the Data Recipient should use when requesting a data file from the Data Sender. |
-| → headerName | 1..1 | string |  |
-| → headerValue | 1..1 | string |  |
-| oauthMetadataUrl | 0..* | string (url) | Location that a Data Recipient can use to obtain the information needed to retrieve files protected using OAuth 2.0. The url SHALL be the path to a FHIR Authorization Endpoint and Capabilities Discovery file or another OAuth 2.0 Protected Resource Metadata file that is registered in the IANA Well-Known URIs Registry. |
-| fileEncryptionKey | 0..1 | part |  |
-| → coding | 0..1 | Coding | If omitted, defaults to a system of http://hl7.org/fhir/uv/bulkdata/ValueSet/file-encryption-type and code of jwe |
-| → value | 1..1 | string | For the system of file-encryption-type and code of jwe populate with the JSON Web Encryption structure to deliver a Content Encryption Key for the Data Recipient to decrypt retrieved data files from the Data Provider. Experimental, looking for feedback on the draft specification |
-| metadata | 0..1 | part | Child parameters can be added under this parameter to pass pre-coordinated data relevant to the submission from the Data Provider to the Data Recipient. Each child parameter name SHALL be an absolute URL. |
-| import | 0..1 | part | Child parameters can be added under this parameter to pass pre-coordinated options relevant to how the data will be processed from the Data Provider to the Data Recipient. For example, a Data Recipient may allow the Data Provider to specify whether or not existing data should be replaced with the data in the submission. Each child parameter name SHALL be an absolute URL. |
-
-
-## Security
-The Data Recipient SHOULD implement OAuth 2.0 access management in accordance with the SMART Backend Services Authorization Profile. When SMART Backend Services Authorization is used, the Data Provider SHALL use a token with a scope of system/bulk-submit when kicking off the bulk-submit operation.
-
-If the oauthMetadataUrl parameter in the request is populated, the Data Recipient SHALL obtain and use a valid token when retrieving the manifest at the manifestUrl.
-
-If the fileEncryptionKey parameter is set, the Data Provider SHALL use the key to encrypt files, and the Data Recipient SHALL decrypt them.
-
-If fileRequestHeaders is included, the Data Recipient SHALL provide the listed headers when requesting files.
-
-## Manifest
-When populated, the manifestUrl parameter SHALL contain a url pointing to a valid Bulk Data Manifest. The manifest MAY contain a link field for additional manifests.
-
-## Response - Success
-- HTTP Status Code of 200 OK
-- Optionally, a FHIR OperationOutcome resource in the body
-
-## Response - Error
-- HTTP Status Code of 4XX or 5XX
-- The body SHALL be a FHIR OperationOutcome resource
-
-If rate limiting, respond with 429 Too Many Requests and Retry-After header.
-*/
 
 
 export default async function bulkSubmitHandler(req: Request, res: Response) {
@@ -106,6 +61,7 @@ export default async function bulkSubmitHandler(req: Request, res: Response) {
         return;
     }
 
+    // manifestUrl -------------------------------------------------------------
     // Validate the manifestUrl parameter (0..1)
     // Url pointing to a Bulk Export Manifest with a pre-coordinated FHIR data
     // set. Files in multiple submitted manifests with the same submitter and
@@ -116,6 +72,7 @@ export default async function bulkSubmitHandler(req: Request, res: Response) {
     const manifestUrlParam = parameters.parameter.find(p => p.name === 'manifestUrl');
     const manifestUrl = manifestUrlParam?.valueString || manifestUrlParam?.valueUri || "";
 
+    // replacesManifestUrl -----------------------------------------------------
     // Validate the replacesManifestUrl parameter (0..1)
     const replacesManifestUrlParam = parameters.parameter.find(p => p.name === 'replacesManifestUrl');
     const replacesManifestUrl = replacesManifestUrlParam?.valueString || replacesManifestUrlParam?.valueUri || "";
@@ -126,6 +83,7 @@ export default async function bulkSubmitHandler(req: Request, res: Response) {
         return;
     }
 
+    // outputFormat ------------------------------------------------------------
     // outputFormat parameter (0..1) string (MIME-type)
     // Could also look like "application/fhir+json; fhirVersion=4.0"
     const outputFormatParam = parameters.parameter.find(p => p.name === 'outputFormat');

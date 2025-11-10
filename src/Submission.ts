@@ -3,7 +3,6 @@ import { hashString, roundToPrecision } from "./utils";
 import { Job }                          from "./Job";
 import StatusManifest                   from "./StatusManifest";
 import { BASE_URL }                     from "./config";
-import CustomError                      from "./CustomError";
 
 
 export class Submission {
@@ -79,8 +78,6 @@ export class Submission {
     }
 
     async start() {
-        // this._status = 'in-progress';
-        // TODO: Also mark all associated jobs as in-progress?
         this.jobs.forEach((job) => {
             if (job.status === 'pending' || job.status === 'failed' || job.status === 'aborted') {
                 job.start();
@@ -90,12 +87,10 @@ export class Submission {
 
     async complete() {
         this._status = 'complete';
-        // TODO: Also mark all associated jobs as complete?
     }
 
     async abort() {
         this._status = 'aborted';
-        // TODO: Also mark all associated jobs as aborted?
     }
 
     static computeSlug(submissionId: string, submitter: Identifier): string {
