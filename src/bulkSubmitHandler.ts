@@ -138,6 +138,14 @@ export default async function bulkSubmitHandler(req: Request, res: Response) {
 
     }
 
+    // FHIRBaseUrl -------------------------------------------------------------
+    const fhirBaseUrlParam = parameters.parameter.find(p => p.name === 'FHIRBaseUrl');
+    const FHIRBaseUrl = fhirBaseUrlParam?.valueString || fhirBaseUrlParam?.valueUri || "";
+    if (!FHIRBaseUrl) {
+        res.status(400).send('Missing or invalid FHIRBaseUrl parameter');
+        return;
+    }
+
     const action = getRequestedAction({
         submissionStatus,
         replacesManifestUrl
@@ -172,6 +180,7 @@ export default async function bulkSubmitHandler(req: Request, res: Response) {
             response: res,
             manifestUrl,
             outputFormat,
+            FHIRBaseUrl
         });
     }
     
@@ -185,6 +194,7 @@ export default async function bulkSubmitHandler(req: Request, res: Response) {
             response: res,
             manifestUrl,
             outputFormat,
+            FHIRBaseUrl
         });
     }
 
@@ -193,7 +203,8 @@ export default async function bulkSubmitHandler(req: Request, res: Response) {
     // -------------------------------------------------------------------------
     if (action === 'replace') {
         return await replaceManifest({
-            response: res
+            response: res,
+            FHIRBaseUrl
         });
     }
 }
@@ -219,13 +230,15 @@ async function startNewJob({
     submissionId,
     response,
     manifestUrl,
-    outputFormat
+    outputFormat,
+    FHIRBaseUrl
 }: {
     submitter: Identifier
     submissionId: string
     response: Response
     manifestUrl: string
     outputFormat: string
+    FHIRBaseUrl: string
 }) {
     const submission = await DB.submissions.findOrCreate({ submissionId, submitter });
 
@@ -247,6 +260,7 @@ async function startNewJob({
         manifestUrl,
         outputFormat,
         kickoffUrl  : `${BASE_URL}/$bulk-submit`,
+        FHIRBaseUrl
     });
 
     submission.addJob(job);
@@ -265,13 +279,15 @@ async function completeSubmission({
     submissionId,
     response,
     manifestUrl,
-    outputFormat
+    outputFormat,
+    FHIRBaseUrl
 }: {
     submitter: Identifier
     submissionId: string
     response: Response
     manifestUrl: string
     outputFormat: string
+    FHIRBaseUrl: string
 }) {
     const submission = await DB.submissions.findOrCreate({ submissionId, submitter });
 
@@ -292,7 +308,8 @@ async function completeSubmission({
             manifestUrl,
             outputFormat,
             kickoffUrl: `${BASE_URL}/$bulk-submit`,
-            onError: (error) => submission.statusManifest.addError(error as any, manifestUrl)
+            onError: (error) => submission.statusManifest.addError(error as any, manifestUrl),
+            FHIRBaseUrl
         });
     
         submission.addJob(job);
@@ -357,12 +374,11 @@ async function abortSubmission({
 }
 
 async function replaceManifest({
-    response
+    response,
+    FHIRBaseUrl
 }: {
     response: Response
-    // submitter: Identifier
-    // submissionId: string
-    // replacesManifestId: string
+    FHIRBaseUrl: string
 }) {
     response.status(400).json(createOperationOutcome({
         severity   : 'error',

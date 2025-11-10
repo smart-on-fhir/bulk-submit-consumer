@@ -10,6 +10,7 @@ export interface JobDescriptor {
     outputFormat: string;
     manifestUrl : string;
     kickoffUrl  : string;
+    FHIRBaseUrl : string;
     onError?: (error: Error) => void;
 }
 
@@ -32,6 +33,7 @@ export class Job {
         submissionId,
         outputFormat,
         manifestUrl,
+        FHIRBaseUrl,
         onError
     }: JobDescriptor) {
         this.jobId        = randomUUID();
@@ -42,7 +44,8 @@ export class Job {
         this.onError      = onError;
         this.createdAt    = new Date().toISOString();
         this.downloader   = new BulkDownloader({
-            destinationDir: `jobs/${submissionId}/downloads/${this.jobId}`
+            destinationDir: `jobs/${submissionId}/downloads/${this.jobId}`,
+            FHIRBaseUrl,
         });
 
         this.progressEventHandler = this.progressEventHandler.bind(this);

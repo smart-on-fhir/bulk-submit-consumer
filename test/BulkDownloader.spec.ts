@@ -14,13 +14,13 @@ describe('BulkDownloader', () => {
     });
 
     it('should emit abort event when aborted', (done) => {
-        const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR });
+        const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR, FHIRBaseUrl: 'http://example.com' });
         downloader.on('abort', () => { done(); });
         downloader.abort();
     });
 
     it('should report status correctly', async () => {
-        const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR });
+        const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR, FHIRBaseUrl: 'http://example.com' });
         expect(downloader.status).to.equal('No files to download');
 
         // Simulate setting total and downloaded files

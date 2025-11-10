@@ -78,6 +78,7 @@ describe('Bulk Submit Validation', () => {
 
         const submitterParam    = generateSubmitterParam();
         const submissionIdParam = generateSubmissionIdParam();
+        const fhirBaseUrlParam = { name: 'FHIRBaseUrl', valueString: "http://example.com/fhir" };
         
         // First, create a job and complete it
         await request(app)
@@ -85,6 +86,7 @@ describe('Bulk Submit Validation', () => {
           .send({ parameter: [
               submitterParam,
               submissionIdParam,
+              fhirBaseUrlParam,
               generateManifestUrlParam(),
               generateSubmissionStatusParam('complete')
           ]})
@@ -97,6 +99,7 @@ describe('Bulk Submit Validation', () => {
           .send({ parameter: [
               submitterParam,
               submissionIdParam,
+              fhirBaseUrlParam,
               generateManifestUrlParam(),
               generateSubmissionStatusParam('in-progress')
           ]})
@@ -115,6 +118,7 @@ describe('Bulk Submit Requests', () => {
               { name: 'submitter', valueIdentifier: { value: randomUUID(), system: 'urn:uuid' } },
               { name: 'submissionId', valueString: randomUUID() },
               { name: 'manifestUrl', valueString: "http://example.com/manifest" },
+              { name: 'FHIRBaseUrl', valueString: "http://example.com/fhir" },
               {
                 name: 'submissionStatus',
                 valueCoding: {
@@ -135,6 +139,7 @@ describe('Bulk Submit Requests', () => {
               .send({ parameter: [
                   { name: 'submitter', valueIdentifier: { value: randomUUID(), system: 'urn:uuid' } },
                   { name: 'submissionId', valueString: randomUUID() },
+                  { name: 'FHIRBaseUrl', valueString: "http://example.com/fhir" },
                   // { name: 'manifestUrl', valueString: "http://example.com/manifest" },
                   {
                     name: 'submissionStatus',
@@ -154,6 +159,7 @@ describe('Bulk Submit Requests', () => {
 
             const submitterParam = { name: 'submitter', valueIdentifier: { value: randomUUID(), system: 'urn:uuid' } };
             const submissionIdParam = { name: 'submissionId', valueString: randomUUID() };
+            const fhirBaseUrlParam = { name: 'FHIRBaseUrl', valueString: "http://example.com/fhir" };
 
             // Create a job first
             await request(app)
@@ -161,6 +167,7 @@ describe('Bulk Submit Requests', () => {
             .send({ parameter: [
                 submitterParam,
                 submissionIdParam,
+                fhirBaseUrlParam,
                 { name: 'manifestUrl', valueString: "http://example.com/manifest" },
                 {
                   name: 'submissionStatus',
@@ -179,6 +186,7 @@ describe('Bulk Submit Requests', () => {
               .send({ parameter: [
                 submitterParam,
                 submissionIdParam,
+                fhirBaseUrlParam,
                 { name: 'manifestUrl', valueString: "http://example.com/manifest" },
                 {
                   name: 'submissionStatus',
@@ -197,6 +205,7 @@ describe('Bulk Submit Requests', () => {
               .send({ parameter: [
                   submitterParam,
                   submissionIdParam,
+                  fhirBaseUrlParam,
                   { name: 'manifestUrl', valueString: "http://example.com/manifest" },
                   {
                     name: 'submissionStatus',
@@ -242,6 +251,7 @@ describe('Bulk Submit Requests', () => {
             const manifestUrlParam = generateManifestUrlParam();
             const outputFormatParam = generateOutputFormatParam();
             const submissionStatusParam = generateSubmissionStatusParam('complete');
+            const fhirBaseUrlParam = { name: 'FHIRBaseUrl', valueString: "http://example.com/fhir" };
 
             await request(app)
                 .post('/$bulk-submit')
@@ -250,7 +260,8 @@ describe('Bulk Submit Requests', () => {
                     submissionIdParam,
                     manifestUrlParam,
                     submissionStatusParam,
-                    outputFormatParam
+                    outputFormatParam,
+                    fhirBaseUrlParam
                 ]})
                 .expect(200)
                 .expect(/marked as complete/);
@@ -263,6 +274,7 @@ describe('Bulk Submit Requests', () => {
             const submissionIdParam = generateSubmissionIdParam();
             const manifestUrlParam = { name: 'manifestUrl', valueString: "http://example.com/manifest" };
             const outputFormatParam = { name: '_outputFormat', valueString: "application/fhir+ndjson" };
+            const fhirBaseUrlParam = { name: 'FHIRBaseUrl', valueString: "http://example.com/fhir" };
             const submissionStatusParam = (status: 'in-progress' | 'complete' | 'aborted' | 'failed') => ({
                 name: 'submissionStatus',
                 valueCoding: {
@@ -281,7 +293,8 @@ describe('Bulk Submit Requests', () => {
                 submissionIdParam,
                 manifestUrlParam,
                 submissionStatusInProgressParam,
-                outputFormatParam
+                outputFormatParam,
+                fhirBaseUrlParam
             ]})
             .expect(200);
 
@@ -293,7 +306,8 @@ describe('Bulk Submit Requests', () => {
                 submissionIdParam,
                 manifestUrlParam,
                 submissionStatusCompleteParam,
-                outputFormatParam
+                outputFormatParam,
+                fhirBaseUrlParam
             ]})
             .expect(200);
 
@@ -305,7 +319,8 @@ describe('Bulk Submit Requests', () => {
                   submissionIdParam,
                   manifestUrlParam,
                   submissionStatusCompleteParam,
-                  outputFormatParam
+                  outputFormatParam,
+                  fhirBaseUrlParam
               ]})
               .expect('content-type', /json/)
               .expect(400, /Submission is already complete or aborted/);
@@ -318,6 +333,7 @@ describe('Bulk Submit Requests', () => {
         const submitterParam = generateSubmitterParam();
         const submissionIdParam = generateSubmissionIdParam();
         const manifestUrlParam = generateManifestUrlParam('http://example.com/manifest')
+        const fhirBaseUrlParam = { name: 'FHIRBaseUrl', valueString: "http://example.com/fhir" };
 
         // Create a submission first
         await request(app)
@@ -326,6 +342,7 @@ describe('Bulk Submit Requests', () => {
               submitterParam,
               submissionIdParam,
               manifestUrlParam,
+              fhirBaseUrlParam,
               generateSubmissionStatusParam("in-progress"),
               generateOutputFormatParam()
           ]})
@@ -338,12 +355,14 @@ describe('Bulk Submit Requests', () => {
               submitterParam,
               submissionIdParam,
               manifestUrlParam,
+              fhirBaseUrlParam,
               generateManifestUrlParam("http://example.com/manifest-2"),
               generateSubmissionStatusParam("in-progress"),
               generateOutputFormatParam(),
               generateReplacesManifestUrl(manifestUrlParam.valueString)
           ]})
           .expect('content-type', /json/)
-          .expect(400, /Manifest replacement is not yet implemented/);
+          // .expect(400, /Manifest replacement is not yet implemented/)
+          .expect(200);
     });
 });

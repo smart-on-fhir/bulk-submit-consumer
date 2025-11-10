@@ -48,10 +48,18 @@ class BulkDownloader extends EventEmitter
     private total: number = 0;
     private downloaded: number = 0;
     private destinationDir: string;
+    private FHIRBaseUrl: string;
 
-    constructor({ destinationDir }: { destinationDir: string }) {
+    constructor({
+        destinationDir,
+        FHIRBaseUrl,
+    }: {
+        destinationDir: string,
+        FHIRBaseUrl: string,
+    }) {
         super();
         this.destinationDir = destinationDir;
+        this.FHIRBaseUrl = FHIRBaseUrl;
         this.abortController = new AbortController();
         this.abortController.signal.addEventListener("abort", () => {
             this.emit("abort")

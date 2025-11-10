@@ -1,6 +1,7 @@
 import request        from 'supertest';
 import createApp      from '../src/app';
 import { Submission } from '../src/Submission';
+import DB             from '../src/db';
 import {
     generateSubmitterParam,
     generateSubmissionIdParam,
@@ -8,7 +9,6 @@ import {
     generateSubmissionStatusParam,
     generateManifestUrlParam
 } from './utils'
-import DB from '../src/db';
 
 
 describe('Status Kick-off Validation', () => {
@@ -105,18 +105,20 @@ describe('Status Kick-off Validation', () => {
 
         const submitterParam = generateSubmitterParam();
         const submissionIdParam = generateSubmissionIdParam();
+        const fhirBaseUrlParam = { name: 'FHIRBaseUrl', valueString: "http://example.com/fhir" };
         
         // First, create a job via $bulk-submit
         await request(app)
-          .post('/$bulk-submit')
-          .send({ parameter: [
-              submitterParam,
-              submissionIdParam,
-              { name: 'manifestUrl', valueString: "http://example.com/manifest" },
-              generateSubmissionStatusParam('in-progress'),
-              generateOutputFormatParam()
-          ]})
-          .expect(200);
+            .post('/$bulk-submit')
+            .send({ parameter: [
+                submitterParam,
+                submissionIdParam,
+                fhirBaseUrlParam,
+                { name: 'manifestUrl', valueString: "http://example.com/manifest" },
+                generateSubmissionStatusParam('in-progress'),
+                generateOutputFormatParam()
+            ]})
+            .expect(200);
 
         const slug = Submission.computeSlug(
             submissionIdParam.valueString,
@@ -151,14 +153,16 @@ describe('Status Requests', () => {
 
         const submitterParam    = generateSubmitterParam();
         const submissionIdParam = generateSubmissionIdParam();
+        const fhirBaseUrlParam = { name: 'FHIRBaseUrl', valueString: "http://example.com/fhir" };
         
         // First, create a job via $bulk-submit
         await request(app)
           .post('/$bulk-submit')
           .send({ parameter: [
-              submitterParam,
-              submissionIdParam,
-              generateManifestUrlParam()
+                submitterParam,
+                submissionIdParam,
+                fhirBaseUrlParam,
+                generateManifestUrlParam()
           ]})
           .expect(200);
         
@@ -169,20 +173,21 @@ describe('Status Requests', () => {
 
         // Abort the submission
         await request(app)
-          .post('/$bulk-submit')
-          .send({ parameter: [
-              submitterParam,
-              submissionIdParam,
-              generateSubmissionStatusParam('aborted')
-          ]})
-          .expect(200)
-          .expect(/marked as aborted/);
+            .post('/$bulk-submit')
+            .send({ parameter: [
+                submitterParam,
+                submissionIdParam,
+                fhirBaseUrlParam,
+                generateSubmissionStatusParam('aborted')
+            ]})
+            .expect(200)
+            .expect(/marked as aborted/);
         
         // Finally, do the status request
         await request(app)
-          .get(`/$bulk-submit-status/${slug}`)
-          .expect('Content-Type', /json/)
-          .expect(500, /The submission has been aborted/);
+            .get(`/$bulk-submit-status/${slug}`)
+            .expect('Content-Type', /json/)
+            .expect(500, /The submission has been aborted/);
     });
 
     it ('should return 202 on the initial request', async () => {
@@ -191,17 +196,19 @@ describe('Status Requests', () => {
         const submitterParam    = generateSubmitterParam();
         const submissionIdParam = generateSubmissionIdParam();
         const outputFormatParam = generateOutputFormatParam();
+        const fhirBaseUrlParam = { name: 'FHIRBaseUrl', valueString: "http://example.com/fhir" };
         
         // First, create a job via $bulk-submit
         await request(app)
-          .post('/$bulk-submit')
-          .send({ parameter: [
-              submitterParam,
-              submissionIdParam,
-              outputFormatParam,
-              generateManifestUrlParam()
-          ]})
-          .expect(200);
+            .post('/$bulk-submit')
+            .send({ parameter: [
+                submitterParam,
+                submissionIdParam,
+                outputFormatParam,
+                fhirBaseUrlParam,
+                generateManifestUrlParam()
+            ]})
+            .expect(200);
         
         // Then do the status kick-off
         const res = await request(app)
@@ -229,6 +236,7 @@ describe('Status Requests', () => {
         const submitterParam    = generateSubmitterParam();
         const submissionIdParam = generateSubmissionIdParam();
         const outputFormatParam = generateOutputFormatParam();
+        const fhirBaseUrlParam = { name: 'FHIRBaseUrl', valueString: "http://example.com/fhir" };
 
         // First, create a job via $bulk-submit
         await request(app)
@@ -237,6 +245,7 @@ describe('Status Requests', () => {
                 submitterParam,
                 submissionIdParam,
                 outputFormatParam,
+                fhirBaseUrlParam,
                 generateManifestUrlParam(),
                 generateSubmissionStatusParam('complete')
             ]})
@@ -268,6 +277,7 @@ describe('Status Requests', () => {
         const submitterParam    = generateSubmitterParam();
         const submissionIdParam = generateSubmissionIdParam();
         const outputFormatParam = generateOutputFormatParam();
+        const fhirBaseUrlParam = { name: 'FHIRBaseUrl', valueString: "http://example.com/fhir" };
         
         // First, create a job via $bulk-submit
         await request(app)
@@ -276,6 +286,7 @@ describe('Status Requests', () => {
                 submitterParam,
                 submissionIdParam,
                 outputFormatParam,
+                fhirBaseUrlParam,
                 generateManifestUrlParam(),
                 generateSubmissionStatusParam('complete')
             ]})
