@@ -107,6 +107,41 @@ export default async function bulkSubmitHandler(req: Request, res: Response) {
         return;
     }
 
+    // fileRequestHeader -------------------------------------------------------
+    /*
+        {
+        "parameter": [{
+            "name": "fileRequestHeader",
+            "part": [{
+                "name": "headerName",
+                "valueString": "a-headerName"
+            },{
+                "name": "headerValue",
+                "valueString": "a-value"
+            }]
+        },{
+            "name": "fileRequestHeaders",
+            "part": [{
+            "name": "headerName",
+            "valueString": "b-headerName"
+            },{
+            "name": "headerValue",
+            "valueString": "b-value"
+            }]
+        }] 
+        }
+    */
+    const fileRequestHeaderParams = parameters.parameter.filter(p => p.name === 'fileRequestHeader');
+    const fileRequestHeaders = (fileRequestHeaderParams.map(p => {
+        const name = p.part?.find(part => part.name === 'headerName')?.valueString;
+        const value = p.part?.find(part => part.name === 'headerValue')?.valueString;
+        return name && value ? { name, value } : null;
+    }).filter(Boolean) as { name: string; value: string }[]).reduce((acc, curr) => {
+        acc[curr.name] = curr.value;
+        return acc;
+    }, {} as Record<string, string>);
+
+
     const action = getRequestedAction({
         submissionStatus,
         replacesManifestUrl
@@ -141,7 +176,8 @@ export default async function bulkSubmitHandler(req: Request, res: Response) {
             response: res,
             manifestUrl,
             outputFormat,
-            FHIRBaseUrl
+            FHIRBaseUrl,
+            fileRequestHeaders
         });
     }
     
@@ -155,7 +191,8 @@ export default async function bulkSubmitHandler(req: Request, res: Response) {
             response: res,
             manifestUrl,
             outputFormat,
-            FHIRBaseUrl
+            FHIRBaseUrl,
+            fileRequestHeaders
         });
     }
 
@@ -170,7 +207,8 @@ export default async function bulkSubmitHandler(req: Request, res: Response) {
             replacesManifestUrl,
             manifestUrl,
             outputFormat,
-            FHIRBaseUrl
+            FHIRBaseUrl,
+            fileRequestHeaders
         });
     }
 }
@@ -197,7 +235,8 @@ async function startNewJob({
     response,
     manifestUrl,
     outputFormat,
-    FHIRBaseUrl
+    FHIRBaseUrl,
+    fileRequestHeaders
 }: {
     submitter: Identifier
     submissionId: string
@@ -205,6 +244,7 @@ async function startNewJob({
     manifestUrl: string
     outputFormat: string
     FHIRBaseUrl: string
+    fileRequestHeaders?: Record<string, string>
 }) {
     const submission = await DB.submissions.findOrCreate({ submissionId, submitter });
 
@@ -226,7 +266,9 @@ async function startNewJob({
         manifestUrl,
         outputFormat,
         kickoffUrl  : `${BASE_URL}/$bulk-submit`,
-        FHIRBaseUrl
+        FHIRBaseUrl,
+        fileRequestHeaders,
+        onError: (error) => submission.statusManifest.addError(error as any, manifestUrl)
     });
 
     submission.addJob(job);
@@ -246,7 +288,8 @@ async function completeSubmission({
     response,
     manifestUrl,
     outputFormat,
-    FHIRBaseUrl
+    FHIRBaseUrl,
+    fileRequestHeaders
 }: {
     submitter: Identifier
     submissionId: string
@@ -254,6 +297,7 @@ async function completeSubmission({
     manifestUrl: string
     outputFormat: string
     FHIRBaseUrl: string
+    fileRequestHeaders?: Record<string, string>
 }) {
     const submission = await DB.submissions.findOrCreate({ submissionId, submitter });
 
@@ -275,7 +319,8 @@ async function completeSubmission({
             outputFormat,
             kickoffUrl: `${BASE_URL}/$bulk-submit`,
             onError: (error) => submission.statusManifest.addError(error as any, manifestUrl),
-            FHIRBaseUrl
+            FHIRBaseUrl,
+            fileRequestHeaders
         });
     
         submission.addJob(job);
@@ -346,7 +391,8 @@ async function replaceManifest({
     replacesManifestUrl,
     manifestUrl,
     outputFormat,
-    FHIRBaseUrl
+    FHIRBaseUrl,
+    fileRequestHeaders
 }: {
     response: Response
     submitter: Identifier
@@ -355,6 +401,7 @@ async function replaceManifest({
     manifestUrl: string
     outputFormat: string
     FHIRBaseUrl: string
+    fileRequestHeaders?: Record<string, string>
 }) {
     const submission = await DB.submissions.find({ submissionId, submitter });
     
@@ -395,7 +442,8 @@ async function replaceManifest({
         outputFormat,
         kickoffUrl: `${BASE_URL}/$bulk-submit`,
         onError: (error) => submission.statusManifest.addError(error as any, manifestUrl),
-        FHIRBaseUrl
+        FHIRBaseUrl,
+        fileRequestHeaders
     });
 
     submission.addJob(newJob);
