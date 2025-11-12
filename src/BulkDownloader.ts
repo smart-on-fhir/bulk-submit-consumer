@@ -310,6 +310,9 @@ class BulkDownloader extends EventEmitter
             });
             this.emit("downloadComplete", file.url, count);
         } catch (error) {
+            if (this.isAborted) {
+                return;
+            }
             // console.error((error as Error).stack);
             const customError = new CustomError(`Failed to download file ${basename(file.url)}: ${(error as Error).message}`, {
                 filePath    : filepath,
@@ -498,6 +501,9 @@ class BulkDownloader extends EventEmitter
                 reader.releaseLock();
             }
         } catch (error) {
+            if (this.isAborted) {
+                return;
+            }
             // Emit error but don't fail the entire download process
             const customError = new CustomError(
                 `Failed to download attachment from ${url}: ${(error as Error).message}`,

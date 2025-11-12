@@ -90,6 +90,9 @@ export class Submission {
 
     async abort() {
         this._status = 'aborted';
+        this.jobs.forEach((job) => {
+            job.abort();
+        });
     }
 
     static computeSlug(submissionId: string, submitter: Identifier): string {
