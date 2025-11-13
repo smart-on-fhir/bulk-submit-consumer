@@ -268,7 +268,8 @@ async function startNewJob({
         kickoffUrl  : `${BASE_URL}/$bulk-submit`,
         FHIRBaseUrl,
         fileRequestHeaders,
-        onError: (error) => submission.statusManifest.addError(error as any, manifestUrl)
+        onError: (error) => submission.statusManifest.addError(error as any, manifestUrl),
+        onSuccess: (url, count) => submission.statusManifest.addSuccess(manifestUrl, url, count)
     });
 
     submission.addJob(job);
@@ -319,6 +320,7 @@ async function completeSubmission({
             outputFormat,
             kickoffUrl: `${BASE_URL}/$bulk-submit`,
             onError: (error) => submission.statusManifest.addError(error as any, manifestUrl),
+            onSuccess: (url, count) => submission.statusManifest.addSuccess(manifestUrl, url, count),
             FHIRBaseUrl,
             fileRequestHeaders
         });
@@ -442,6 +444,7 @@ async function replaceManifest({
         outputFormat,
         kickoffUrl: `${BASE_URL}/$bulk-submit`,
         onError: (error) => submission.statusManifest.addError(error as any, manifestUrl),
+        onSuccess: (url, count) => submission.statusManifest.addSuccess(manifestUrl, url, count),
         FHIRBaseUrl,
         fileRequestHeaders
     });

@@ -13,6 +13,7 @@ export interface JobDescriptor {
     FHIRBaseUrl : string;
     fileRequestHeaders?: Record<string, string>;
     onError?: (error: Error) => void;
+    onSuccess?: (url: string, count: number) => void;
 }
 
 export class Job {
@@ -28,6 +29,7 @@ export class Job {
 
     public readonly downloader: BulkDownloader;
     public readonly onError?: (error: Error) => void;
+    public readonly onSuccess?: (url: string, count: number) => void;
 
 
     constructor({
@@ -36,7 +38,8 @@ export class Job {
         manifestUrl,
         FHIRBaseUrl,
         fileRequestHeaders,
-        onError
+        onError,
+        onSuccess
     }: JobDescriptor) {
         this.jobId        = randomUUID();
         this.submissionId = submissionId;
@@ -44,6 +47,7 @@ export class Job {
         this.manifestUrl  = manifestUrl;
         this.status       = 'pending';
         this.onError      = onError;
+        this.onSuccess    = onSuccess;
         this.createdAt    = new Date().toISOString();
         this.downloader   = new BulkDownloader({
             destinationDir: `jobs/${submissionId}/downloads/${this.jobId}`,
@@ -90,6 +94,7 @@ export class Job {
 
     private downloadEventHandler(url: string, count: number) {
         debug(`Job ${this.jobId} downloaded file: ${url} (${count})`);
+        this.onSuccess?.(url, count);
     }
 
     /**

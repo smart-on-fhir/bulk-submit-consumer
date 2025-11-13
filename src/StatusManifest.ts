@@ -89,12 +89,37 @@ export default class StatusManifest {
      * just increment the success count in the countSeverity extension. There is
      * no need save anything because the manifest lives in memory.
      */
-    async addSuccess(manifestUrl: string) {
+    async addSuccess(manifestUrl: string, fileUrl: string, count: number) {
+
+        // Create an OperationOutcome resource for this success
+        const operationOutcome: OperationOutcome = {
+            resourceType: "OperationOutcome",
+            id: randomUUID(),
+            issue: [{
+                severity: "information",
+                code: "processing",
+                details: {
+                    text: `${count} resources imported from ${fileUrl}`
+                }
+            }]
+        };
+
         let entry = this.error[manifestUrl]?.entry;
         if (!entry) {
             entry = (await this.addManifestUrl(manifestUrl)).entry;
         }
-        entry.extension.countSeverity.success++;
+
+        // Get the entry and the file path for this manifest URL
+        let node = this.error[manifestUrl] || await this.addManifestUrl(manifestUrl);
+
+        // Ensure the directory exists before appending to the file
+        await mkdir(join(node.filePath, '..'), { recursive: true });
+
+        // Append the OperationOutcome resource to the ndjson file
+        await appendFile(node.filePath, JSON.stringify(operationOutcome) + '\n');
+
+        // Increment the success count in the countSeverity extension
+        node.entry.extension!.countSeverity.success++;
     }
 
     /**
@@ -110,7 +135,7 @@ export default class StatusManifest {
             id: randomUUID(),
             issue: [{
                 severity: "error",
-                code: error.context.issueType || "processing",
+                code: error.context?.issueType || "processing",
                 details: {
                     text: error.message
                 }
