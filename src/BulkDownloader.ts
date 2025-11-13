@@ -295,7 +295,7 @@ class BulkDownloader extends EventEmitter
                 currentResource = obj;
                 issueType = 'processing';
                 try {
-                    this.validateResource(obj);
+                    this.validateResource(obj, file);
                 } catch (validationError) {
                     issueType = 'invalid';
                     throw validationError
@@ -313,6 +313,11 @@ class BulkDownloader extends EventEmitter
                 writeStream.on('finish', () => resolve());
                 writeStream.on('error', reject);
             });
+
+            // Check resource count if expected count is provided
+            if (file.count !== undefined && file.count !== count) {
+                throw new Error(`File ${file.url} expected ${file.count} resources but got ${count}`);
+            }
 
             // Emit download complete event
             this.emit("downloadComplete", file.url, count);
@@ -524,7 +529,7 @@ class BulkDownloader extends EventEmitter
         }
     }
 
-    private validateResource(resource: Resource) {
+    private validateResource(resource: Resource, file: ExportManifestFile) {
         if (typeof resource !== 'object' || resource === null) {
             throw new Error("Resource is not an object");
         }
@@ -533,6 +538,9 @@ class BulkDownloader extends EventEmitter
         }
         if (!resource.id || typeof resource.id !== 'string') {
             throw new Error("Resource ID is missing or invalid");
+        }
+        if (file.type && resource.resourceType !== file.type) {
+            throw new Error(`Resource type ${resource.resourceType} does not match expected type ${file.type}`);
         }
     }
 }
