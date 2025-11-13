@@ -224,7 +224,7 @@ class BulkDownloader extends EventEmitter
             });
 
             // Download output files
-            (manifest.output  || []).forEach(
+            (manifest.output || []).forEach(
                 file => this.queue.addJob(
                     (signal) => this.downloadFile({ file, exportType: "output", signal })
                 )
@@ -238,7 +238,7 @@ class BulkDownloader extends EventEmitter
             );
 
             // Download error files
-            (manifest.error   || []).forEach(
+            (manifest.error || []).forEach(
                 file => this.queue.addJob(
                     (signal) => this.downloadFile({ file, exportType: "error", signal })
                 )
@@ -272,11 +272,14 @@ class BulkDownloader extends EventEmitter
         let issueType = 'processing';
 
         try {
+            // Create the necessary directories
             const filename  = basename(new URL(file.url).pathname);
             const subfolder = `${this.destinationDir}/${exportType}`;
             const dir       = join(__dirname, '..', subfolder);
             filepath        = join(dir, filename);
             await mkdir(dir, { recursive: true });
+
+            // Download the file
             requestResult = await request(file.url, {
                 signal,
                 parse: true,
@@ -284,6 +287,8 @@ class BulkDownloader extends EventEmitter
             });
             const { error, response } = requestResult;
             if (error) throw new Error(error);
+
+            // Stream the response body to a file
             const generator = response?.body as AsyncGenerator<any>;
             const writeStream = createWriteStream(filepath, { flags: 'a' }); // Append mode
             for await (const obj of generator) {
@@ -308,12 +313,15 @@ class BulkDownloader extends EventEmitter
                 writeStream.on('finish', () => resolve());
                 writeStream.on('error', reject);
             });
+
+            // Emit download complete event
             this.emit("downloadComplete", file.url, count);
         } catch (error) {
             if (this.isAborted) {
                 return;
             }
-            // console.error((error as Error).stack);
+
+            // Create and emit a custom error
             const customError = new CustomError(`Failed to download file ${basename(file.url)}: ${(error as Error).message}`, {
                 filePath    : filepath,
                 request     : requestResult?.request,

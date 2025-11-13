@@ -310,7 +310,7 @@ async function completeSubmission({
         return;
     }
 
-    // TODO: Add job if needed
+    // Add job if needed
     if (submission.jobs.size === 0) {
         const job = new Job({
             // submitter,
