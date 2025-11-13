@@ -157,7 +157,7 @@ class BulkDownloader extends EventEmitter
         try {
             const manifest = await this.downloadManifest(manifestUrl);
             this.validateManifest(manifest);
-            await this.downloadAllFiles(manifest);
+            await this.downloadAllFiles(manifest, manifestUrl);
         } catch (error) {
             this.emit("error", error as Error);
         }
@@ -196,7 +196,7 @@ class BulkDownloader extends EventEmitter
         }
     }
 
-    private async downloadAllFiles(manifest: ExportManifest) {
+    private async downloadAllFiles(manifest: ExportManifest, manifestUrl: string) {
 
         // Abort any ongoing downloads and reset the queue
         this.queue.abortAll();
@@ -226,21 +226,21 @@ class BulkDownloader extends EventEmitter
             // Download output files
             (manifest.output || []).forEach(
                 file => this.queue.addJob(
-                    (signal) => this.downloadFile({ file, exportType: "output", signal })
+                    (signal) => this.downloadFile({ file, exportType: "output", signal, manifestUrl })
                 )
             );
 
             // Download deleted files
             (manifest.deleted || []).forEach(
                 file => this.queue.addJob(
-                    (signal) => this.downloadFile({ file, exportType: "deleted", signal })
+                    (signal) => this.downloadFile({ file, exportType: "deleted", signal, manifestUrl })
                 )
             );
 
             // Download error files
             (manifest.error || []).forEach(
                 file => this.queue.addJob(
-                    (signal) => this.downloadFile({ file, exportType: "error", signal })
+                    (signal) => this.downloadFile({ file, exportType: "error", signal, manifestUrl })
                 )
             );
         });
@@ -254,11 +254,13 @@ class BulkDownloader extends EventEmitter
     private async downloadFile({
         file,
         exportType,
-        signal = this.abortController.signal
+        signal = this.abortController.signal,
+        manifestUrl
     }: {
         file: ExportManifestFile;
         exportType: "output" | "deleted" | "error";
         signal?: AbortSignal;
+        manifestUrl: string;
     }) {
         if (this.isAborted) {
             return;
@@ -273,14 +275,15 @@ class BulkDownloader extends EventEmitter
 
         try {
             // Create the necessary directories
-            const filename  = basename(new URL(file.url).pathname);
+            const fileUrl   = new URL(file.url, manifestUrl);
+            const filename  = basename(fileUrl.pathname);
             const subfolder = `${this.destinationDir}/${exportType}`;
             const dir       = join(__dirname, '..', subfolder);
             filepath        = join(dir, filename);
             await mkdir(dir, { recursive: true });
 
             // Download the file
-            requestResult = await request(file.url, {
+            requestResult = await request(fileUrl, {
                 signal,
                 parse: true,
                 headers: this.fileRequestHeaders
