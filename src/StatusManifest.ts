@@ -85,9 +85,9 @@ export default class StatusManifest {
     }
 
     /**
-     * In case of success we don't append any OperationOutcome resources. We
-     * just increment the success count in the countSeverity extension. There is
-     * no need save anything because the manifest lives in memory.
+     * In case of success we append an OperationOutcome resource. We also
+     * increment the success count in the countSeverity extension. There is
+     * no need to save anything because the manifest lives in memory.
      */
     async addSuccess(manifestUrl: string, fileUrl: string, count: number) {
 
