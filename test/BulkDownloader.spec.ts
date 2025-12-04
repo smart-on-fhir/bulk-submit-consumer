@@ -14,13 +14,13 @@ describe('BulkDownloader', () => {
     });
 
     it('should emit abort event when aborted', (done) => {
-        const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR, FHIRBaseUrl: 'http://example.com' });
+        const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR, fhirBaseUrl: 'http://example.com' });
         downloader.on('abort', () => { done(); });
         downloader.abort();
     });
 
     it('should report status correctly', async () => {
-        const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR, FHIRBaseUrl: 'http://example.com' });
+        const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR, fhirBaseUrl: 'http://example.com' });
         expect(downloader.status).to.equal('No files to download');
 
         // Simulate setting total and downloaded files
@@ -51,7 +51,7 @@ describe('BulkDownloader', () => {
             .get('/manifest')
             .reply(200, mockManifest, { 'content-type': 'application/json' });
 
-        const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR, FHIRBaseUrl: 'http://example.com' });
+        const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR, fhirBaseUrl: 'http://example.com' });
         const manifest = await (downloader as any).downloadManifest('http://example.com/manifest');
         expect(manifest).to.deep.equal(mockManifest);
     });
@@ -65,7 +65,7 @@ describe('BulkDownloader', () => {
             });
         const downloader = new BulkDownloader({ 
             destinationDir: DOWNLOADS_DIR, 
-            FHIRBaseUrl: 'http://example.com',
+            fhirBaseUrl: 'http://example.com',
             fileRequestHeaders: {
                 'Authorization': 'Bearer test-token'
             }
@@ -78,7 +78,7 @@ describe('BulkDownloader', () => {
     });
 
     it('should validate manifest', async () => {
-        const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR, FHIRBaseUrl: 'http://example.com' });
+        const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR, fhirBaseUrl: 'http://example.com' });
         const validManifest = {
             transactionTime: "2025-01-01T00:00:00Z",
             request: "http://example.com/export",
@@ -110,7 +110,7 @@ describe('BulkDownloader', () => {
     });
 
     it ('downloadFile does nothing if aborted', async () => {
-        const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR, FHIRBaseUrl: 'http://example.com' });
+        const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR, fhirBaseUrl: 'http://example.com' });
         downloader.abort();
         await (downloader as any).downloadFile({ file: { url: 'http://example.com/file.ndjson' }, exportType: 'output' });
         expect((downloader as any).downloaded).to.equal(0);
@@ -123,7 +123,7 @@ describe('BulkDownloader', () => {
             .reply(404, { error: 'Not Found' });
 
         const eventLog: string[] = [];
-        const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR, FHIRBaseUrl: 'http://example.com' });
+        const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR, fhirBaseUrl: 'http://example.com' });
         downloader.on('error', () => { eventLog.push("error"); });
         downloader.on('downloadStart', () => { eventLog.push("downloadStart"); });
         downloader.on('downloadComplete', () => { eventLog.push("downloadComplete"); });
@@ -158,7 +158,7 @@ describe('BulkDownloader', () => {
             .get('/patients.ndjson')
             .reply(200, ndjsonData, { 'content-type': 'application/ndjson' });
 
-        const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR, FHIRBaseUrl: 'http://example.com' });
+        const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR, fhirBaseUrl: 'http://example.com' });
         await (downloader as any).downloadFile({ file: { url: 'http://example.com/patients.ndjson' }, exportType: 'output' });
 
         // Verify the file contents
@@ -205,7 +205,7 @@ describe('BulkDownloader', () => {
                 .get('/documents/file.pdf')
                 .reply(200, pdfContent);
 
-            const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR, FHIRBaseUrl: 'http://example.com' });
+            const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR, fhirBaseUrl: 'http://example.com' });
             await (downloader as any).downloadFile({ file: { url: 'http://example.com/patients.ndjson' }, exportType: 'output' });
 
             // Verify the attachment was downloaded
@@ -237,7 +237,7 @@ describe('BulkDownloader', () => {
                 .get('/documents.ndjson')
                 .reply(200, ndjsonData, { 'content-type': 'application/ndjson' });
 
-            const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR, FHIRBaseUrl: 'http://example.com' });
+            const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR, fhirBaseUrl: 'http://example.com' });
             await (downloader as any).downloadFile({ file: { url: 'http://example.com/documents.ndjson' }, exportType: 'output' });
 
             // Verify the inline attachment was saved
@@ -283,7 +283,7 @@ describe('BulkDownloader', () => {
                 .get('/docs/report.pdf')
                 .reply(200, pdfContent);
 
-            const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR, FHIRBaseUrl: 'http://example.com' });
+            const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR, fhirBaseUrl: 'http://example.com' });
             await (downloader as any).downloadFile({ file: { url: 'http://example.com/documents.ndjson' }, exportType: 'output' });
 
             // Verify both attachments were saved
@@ -322,7 +322,7 @@ describe('BulkDownloader', () => {
                 .get('/Binary/123')
                 .reply(200, binaryContent);
 
-            const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR, FHIRBaseUrl: 'http://example.com' });
+            const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR, fhirBaseUrl: 'http://example.com' });
             await (downloader as any).downloadFile({ file: { url: 'http://example.com/documents.ndjson' }, exportType: 'output' });
 
             // Verify the attachment was downloaded with resolved URL
@@ -359,7 +359,7 @@ describe('BulkDownloader', () => {
                 .get('/data/attachments/file.pdf')
                 .reply(200, pdfContent);
 
-            const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR, FHIRBaseUrl: 'http://example.com' });
+            const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR, fhirBaseUrl: 'http://example.com' });
             await (downloader as any).downloadFile({ file: { url: 'http://example.com/data/documents.ndjson' }, exportType: 'output' });
 
             // Verify the attachment was downloaded relative to the NDJSON file
@@ -369,7 +369,7 @@ describe('BulkDownloader', () => {
         });
 
         it('should get correct file extension from content type', () => {
-            const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR, FHIRBaseUrl: 'http://example.com' });
+            const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR, fhirBaseUrl: 'http://example.com' });
             
             expect((downloader as any).getExtensionFromContentType('image/jpeg')).to.equal('.jpg');
             expect((downloader as any).getExtensionFromContentType('image/png')).to.equal('.png');
@@ -407,7 +407,7 @@ describe('BulkDownloader', () => {
                 .reply(404, 'Not Found');
 
             const errors: Error[] = [];
-            const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR, FHIRBaseUrl: 'http://example.com' });
+            const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR, fhirBaseUrl: 'http://example.com' });
             downloader.on('error', (err) => errors.push(err));
 
             await (downloader as any).downloadFile({ file: { url: 'http://example.com/documents.ndjson' }, exportType: 'output' });
@@ -418,7 +418,7 @@ describe('BulkDownloader', () => {
         });
 
         it('should not process attachments if aborted', async () => {
-            const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR, FHIRBaseUrl: 'http://example.com' });
+            const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR, fhirBaseUrl: 'http://example.com' });
             
             // Abort before processing
             downloader.abort();
@@ -447,7 +447,7 @@ describe('BulkDownloader', () => {
                 .get('/documents.ndjson')
                 .reply(200, ndjsonData, { 'content-type': 'application/ndjson' });
 
-            const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR, FHIRBaseUrl: 'http://example.com' });
+            const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR, fhirBaseUrl: 'http://example.com' });
             
             // Should not throw
             await (downloader as any).downloadFile({ file: { url: 'http://example.com/documents.ndjson' }, exportType: 'output' });
@@ -472,7 +472,7 @@ describe('BulkDownloader', () => {
                 .get('/documents.ndjson')
                 .reply(200, ndjsonData, { 'content-type': 'application/ndjson' });
 
-            const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR, FHIRBaseUrl: 'http://example.com' });
+            const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR, fhirBaseUrl: 'http://example.com' });
             
             // Should not throw
             await (downloader as any).downloadFile({ file: { url: 'http://example.com/documents.ndjson' }, exportType: 'output' });
@@ -513,7 +513,7 @@ describe('BulkDownloader', () => {
                 .get('/manifest')
                 .reply(200, mockManifest, { 'content-type': 'application/json' });
 
-            const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR, FHIRBaseUrl: 'http://example.com' });
+            const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR, fhirBaseUrl: 'http://example.com' });
             
             // undoAll will delete the file
             await downloader.undoAll('http://example.com/manifest');
@@ -549,7 +549,7 @@ describe('BulkDownloader', () => {
                 .get('/manifest')
                 .reply(200, mockManifest, { 'content-type': 'application/json' });
 
-            const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR, FHIRBaseUrl: 'http://example.com' });
+            const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR, fhirBaseUrl: 'http://example.com' });
             
             // Should not throw even if file doesn't exist
             await downloader.undoAll('http://example.com/manifest');
@@ -593,7 +593,7 @@ describe('BulkDownloader', () => {
                 .get('/manifest')
                 .reply(200, mockManifest, { 'content-type': 'application/json' });
 
-            const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR, FHIRBaseUrl: 'http://example.com' });
+            const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR, fhirBaseUrl: 'http://example.com' });
             
             await downloader.undoAll('http://example.com/manifest');
 
@@ -622,7 +622,7 @@ describe('BulkDownloader', () => {
                 .reply(200, mockManifest, { 'content-type': 'application/json' });
 
             const errors: Error[] = [];
-            const downloader = new BulkDownloader({ destinationDir: 'non-existent-dir/sub-dir', FHIRBaseUrl: 'http://example.com' });
+            const downloader = new BulkDownloader({ destinationDir: 'non-existent-dir/sub-dir', fhirBaseUrl: 'http://example.com' });
             downloader.on('error', (err) => errors.push(err));
             
             await downloader.undoAll('http://example.com/manifest');
@@ -637,7 +637,7 @@ describe('BulkDownloader', () => {
     describe('Manifest Validation', () => {
         
         it('should reject manifest without transactionTime', () => {
-            const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR, FHIRBaseUrl: 'http://example.com' });
+            const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR, fhirBaseUrl: 'http://example.com' });
             const invalidManifest = {
                 request: "http://example.com/export",
                 requiresAccessToken: true,
@@ -651,7 +651,7 @@ describe('BulkDownloader', () => {
         });
 
         it('should reject manifest with invalid requiresAccessToken', () => {
-            const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR, FHIRBaseUrl: 'http://example.com' });
+            const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR, fhirBaseUrl: 'http://example.com' });
             const invalidManifest = {
                 transactionTime: "2025-01-01T00:00:00Z",
                 request: "http://example.com/export",
@@ -666,7 +666,7 @@ describe('BulkDownloader', () => {
         });
 
         it('should reject manifest with non-array output', () => {
-            const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR, FHIRBaseUrl: 'http://example.com' });
+            const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR, fhirBaseUrl: 'http://example.com' });
             const invalidManifest = {
                 transactionTime: "2025-01-01T00:00:00Z",
                 request: "http://example.com/export",
@@ -681,7 +681,7 @@ describe('BulkDownloader', () => {
         });
 
         it('should reject manifest with invalid deleted property', () => {
-            const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR, FHIRBaseUrl: 'http://example.com' });
+            const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR, fhirBaseUrl: 'http://example.com' });
             const invalidManifest = {
                 transactionTime: "2025-01-01T00:00:00Z",
                 request: "http://example.com/export",
@@ -696,7 +696,7 @@ describe('BulkDownloader', () => {
         });
 
         it('should accept manifest with missing deleted property', () => {
-            const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR, FHIRBaseUrl: 'http://example.com' });
+            const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR, fhirBaseUrl: 'http://example.com' });
             const validManifest = {
                 transactionTime: "2025-01-01T00:00:00Z",
                 request: "http://example.com/export",
@@ -713,14 +713,14 @@ describe('BulkDownloader', () => {
     describe('Resource Validation', () => {
         
         it('should reject null resources', () => {
-            const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR, FHIRBaseUrl: 'http://example.com' });
+            const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR, fhirBaseUrl: 'http://example.com' });
             
             expect(() => (downloader as any).validateResource(null))
                 .to.throw('Resource is not an object');
         });
 
         it('should reject non-object resources', () => {
-            const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR, FHIRBaseUrl: 'http://example.com' });
+            const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR, fhirBaseUrl: 'http://example.com' });
             
             expect(() => (downloader as any).validateResource("not an object"))
                 .to.throw('Resource is not an object');
@@ -735,21 +735,21 @@ describe('BulkDownloader', () => {
         });
 
         it('should reject resources with invalid resourceType', () => {
-            const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR, FHIRBaseUrl: 'http://example.com' });
+            const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR, fhirBaseUrl: 'http://example.com' });
             
             expect(() => (downloader as any).validateResource({ resourceType: 'InvalidType', id: '123' }))
                 .to.throw('Invalid FHIR resourceType: InvalidType');
         });
 
         it('should reject resources without ID', () => {
-            const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR, FHIRBaseUrl: 'http://example.com' });
+            const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR, fhirBaseUrl: 'http://example.com' });
             
             expect(() => (downloader as any).validateResource({ resourceType: 'Patient' }))
                 .to.throw('Resource ID is missing or invalid');
         });
 
         it('should reject resources with non-string ID', () => {
-            const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR, FHIRBaseUrl: 'http://example.com' });
+            const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR, fhirBaseUrl: 'http://example.com' });
             
             expect(() => (downloader as any).validateResource({ resourceType: 'Patient', id: 123 }))
                 .to.throw('Resource ID is missing or invalid');
@@ -759,7 +759,7 @@ describe('BulkDownloader', () => {
         });
 
         it('should accept valid FHIR resources', () => {
-            const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR, FHIRBaseUrl: 'http://example.com' });
+            const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR, fhirBaseUrl: 'http://example.com' });
             expect(() => (downloader as any).validateResource({ resourceType: 'Patient', id: '123' })).to.not.throw();
             expect(() => (downloader as any).validateResource({ resourceType: 'Observation', id: 'obs-1' })).to.not.throw();
         });
@@ -786,7 +786,7 @@ describe('BulkDownloader', () => {
                 .reply(200, ndjsonData, { 'content-type': 'application/ndjson' });
 
             const errors: any[] = [];
-            const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR, FHIRBaseUrl: 'http://example.com' });
+            const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR, fhirBaseUrl: 'http://example.com' });
             downloader.on('error', (err) => errors.push(err));
 
             await (downloader as any).downloadFile({ file: { url: 'http://example.com/patients.ndjson' }, exportType: 'output' });
@@ -812,7 +812,7 @@ describe('BulkDownloader', () => {
                 .reply(200, ndjsonData, { 'content-type': 'application/ndjson' });
 
             const errors: any[] = [];
-            const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR, FHIRBaseUrl: 'http://example.com' });
+            const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR, fhirBaseUrl: 'http://example.com' });
             downloader.on('error', (err) => errors.push(err));
 
             await (downloader as any).downloadFile({ file: { url: 'http://example.com/data.ndjson' }, exportType: 'output' });
@@ -857,7 +857,7 @@ describe('BulkDownloader', () => {
                 .reply(404, 'Not Found');
 
             const errors: Error[] = [];
-            const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR, FHIRBaseUrl: 'http://example.com' });
+            const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR, fhirBaseUrl: 'http://example.com' });
             downloader.on('error', (err) => errors.push(err));
 
             await (downloader as any).downloadFile({ file: { url: 'http://example.com/documents.ndjson' }, exportType: 'output' });
@@ -891,12 +891,12 @@ describe('BulkDownloader', () => {
                 .get('/data.ndjson')
                 .reply(200, ndjsonData, { 'content-type': 'application/ndjson' });
 
-            // Should default to FHIRBaseUrl + url
+            // Should default to fhirBaseUrl + url
             nock('http://example.com')
                 .get('/documents/file.pdf')
                 .reply(200, pdfContent);
 
-            const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR, FHIRBaseUrl: 'http://example.com' });
+            const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR, fhirBaseUrl: 'http://example.com' });
             await (downloader as any).downloadFile({ file: { url: 'http://example.com/data.ndjson' }, exportType: 'output' });
 
             // Verify the attachment was downloaded with default fallback
@@ -928,7 +928,7 @@ describe('BulkDownloader', () => {
                 .reply(200, ndjsonData, { 'content-type': 'application/ndjson' });
 
             const errors: any[] = [];
-            const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR, FHIRBaseUrl: 'http://example.com' });
+            const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR, fhirBaseUrl: 'http://example.com' });
             downloader.on('error', (err) => errors.push(err));
 
             await (downloader as any).downloadFile({ file: { url: 'http://example.com/documents.ndjson' }, exportType: 'output' });

@@ -105,7 +105,7 @@ describe('Status Kick-off Validation', () => {
 
         const submitterParam = generateSubmitterParam();
         const submissionIdParam = generateSubmissionIdParam();
-        const fhirBaseUrlParam = { name: 'FHIRBaseUrl', valueString: "http://example.com/fhir" };
+        const fhirBaseUrlParam = { name: 'fhirBaseUrl', valueString: "http://example.com/fhir" };
         
         // First, create a job via $bulk-submit
         await request(app)
@@ -153,7 +153,7 @@ describe('Status Requests', () => {
 
         const submitterParam    = generateSubmitterParam();
         const submissionIdParam = generateSubmissionIdParam();
-        const fhirBaseUrlParam = { name: 'FHIRBaseUrl', valueString: "http://example.com/fhir" };
+        const fhirBaseUrlParam = { name: 'fhirBaseUrl', valueString: "http://example.com/fhir" };
         
         // First, create a job via $bulk-submit
         await request(app)
@@ -196,7 +196,7 @@ describe('Status Requests', () => {
         const submitterParam    = generateSubmitterParam();
         const submissionIdParam = generateSubmissionIdParam();
         const outputFormatParam = generateOutputFormatParam();
-        const fhirBaseUrlParam = { name: 'FHIRBaseUrl', valueString: "http://example.com/fhir" };
+        const fhirBaseUrlParam = { name: 'fhirBaseUrl', valueString: "http://example.com/fhir" };
         
         // First, create a job via $bulk-submit
         await request(app)
@@ -236,7 +236,7 @@ describe('Status Requests', () => {
         const submitterParam    = generateSubmitterParam();
         const submissionIdParam = generateSubmissionIdParam();
         const outputFormatParam = generateOutputFormatParam();
-        const fhirBaseUrlParam = { name: 'FHIRBaseUrl', valueString: "http://example.com/fhir" };
+        const fhirBaseUrlParam = { name: 'fhirBaseUrl', valueString: "http://example.com/fhir" };
 
         // First, create a job via $bulk-submit
         await request(app)
@@ -277,7 +277,7 @@ describe('Status Requests', () => {
         const submitterParam    = generateSubmitterParam();
         const submissionIdParam = generateSubmissionIdParam();
         const outputFormatParam = generateOutputFormatParam();
-        const fhirBaseUrlParam = { name: 'FHIRBaseUrl', valueString: "http://example.com/fhir" };
+        const fhirBaseUrlParam = { name: 'fhirBaseUrl', valueString: "http://example.com/fhir" };
         
         // First, create a job via $bulk-submit
         await request(app)

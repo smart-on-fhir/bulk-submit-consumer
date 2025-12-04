@@ -10,7 +10,7 @@ export interface JobDescriptor {
     outputFormat: string;
     manifestUrl : string;
     kickoffUrl  : string;
-    FHIRBaseUrl : string;
+    fhirBaseUrl : string;
     fileRequestHeaders?: Record<string, string>;
     onError?: (error: Error) => void;
     onSuccess?: (url: string, count: number) => void;
@@ -36,7 +36,7 @@ export class Job {
         submissionId,
         outputFormat,
         manifestUrl,
-        FHIRBaseUrl,
+        fhirBaseUrl,
         fileRequestHeaders,
         onError,
         onSuccess
@@ -51,7 +51,7 @@ export class Job {
         this.createdAt    = new Date().toISOString();
         this.downloader   = new BulkDownloader({
             destinationDir: `jobs/${submissionId}/downloads/${this.jobId}`,
-            FHIRBaseUrl,
+            fhirBaseUrl,
             fileRequestHeaders
         });
 

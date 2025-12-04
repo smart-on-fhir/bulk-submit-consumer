@@ -78,7 +78,7 @@ describe('Bulk Submit Validation', () => {
 
         const submitterParam    = generateSubmitterParam();
         const submissionIdParam = generateSubmissionIdParam();
-        const fhirBaseUrlParam = { name: 'FHIRBaseUrl', valueString: "http://example.com/fhir" };
+        const fhirBaseUrlParam = { name: 'fhirBaseUrl', valueString: "http://example.com/fhir" };
         
         // First, create a job and complete it
         await request(app)
@@ -118,7 +118,7 @@ describe('Bulk Submit Requests', () => {
               { name: 'submitter', valueIdentifier: { value: randomUUID(), system: 'urn:uuid' } },
               { name: 'submissionId', valueString: randomUUID() },
               { name: 'manifestUrl', valueString: "http://example.com/manifest" },
-              { name: 'FHIRBaseUrl', valueString: "http://example.com/fhir" },
+              { name: 'fhirBaseUrl', valueString: "http://example.com/fhir" },
               {
                 name: 'submissionStatus',
                 valueCoding: {
@@ -139,7 +139,7 @@ describe('Bulk Submit Requests', () => {
               .send({ parameter: [
                   { name: 'submitter', valueIdentifier: { value: randomUUID(), system: 'urn:uuid' } },
                   { name: 'submissionId', valueString: randomUUID() },
-                  { name: 'FHIRBaseUrl', valueString: "http://example.com/fhir" },
+                  { name: 'fhirBaseUrl', valueString: "http://example.com/fhir" },
                   // { name: 'manifestUrl', valueString: "http://example.com/manifest" },
                   {
                     name: 'submissionStatus',
@@ -159,7 +159,7 @@ describe('Bulk Submit Requests', () => {
 
             const submitterParam = { name: 'submitter', valueIdentifier: { value: randomUUID(), system: 'urn:uuid' } };
             const submissionIdParam = { name: 'submissionId', valueString: randomUUID() };
-            const fhirBaseUrlParam = { name: 'FHIRBaseUrl', valueString: "http://example.com/fhir" };
+            const fhirBaseUrlParam = { name: 'fhirBaseUrl', valueString: "http://example.com/fhir" };
 
             // Create a job first
             await request(app)
@@ -251,7 +251,7 @@ describe('Bulk Submit Requests', () => {
             const manifestUrlParam = generateManifestUrlParam();
             const outputFormatParam = generateOutputFormatParam();
             const submissionStatusParam = generateSubmissionStatusParam('complete');
-            const fhirBaseUrlParam = { name: 'FHIRBaseUrl', valueString: "http://example.com/fhir" };
+            const fhirBaseUrlParam = { name: 'fhirBaseUrl', valueString: "http://example.com/fhir" };
 
             await request(app)
                 .post('/$bulk-submit')
@@ -274,7 +274,7 @@ describe('Bulk Submit Requests', () => {
             const submissionIdParam = generateSubmissionIdParam();
             const manifestUrlParam = { name: 'manifestUrl', valueString: "http://example.com/manifest" };
             const outputFormatParam = { name: '_outputFormat', valueString: "application/fhir+ndjson" };
-            const fhirBaseUrlParam = { name: 'FHIRBaseUrl', valueString: "http://example.com/fhir" };
+            const fhirBaseUrlParam = { name: 'fhirBaseUrl', valueString: "http://example.com/fhir" };
             const submissionStatusParam = (status: 'in-progress' | 'complete' | 'aborted' | 'failed') => ({
                 name: 'submissionStatus',
                 valueCoding: {
@@ -333,7 +333,7 @@ describe('Bulk Submit Requests', () => {
         const submitterParam = generateSubmitterParam();
         const submissionIdParam = generateSubmissionIdParam();
         const manifestUrlParam = generateManifestUrlParam('http://example.com/manifest')
-        const fhirBaseUrlParam = { name: 'FHIRBaseUrl', valueString: "http://example.com/fhir" };
+        const fhirBaseUrlParam = { name: 'fhirBaseUrl', valueString: "http://example.com/fhir" };
 
         // Create a submission first
         await request(app)

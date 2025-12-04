@@ -17,7 +17,7 @@ describe('Job', () => {
                 outputFormat: 'ndjson',
                 manifestUrl: 'http://example.com/manifest',
                 kickoffUrl: 'http://example.com/kickoff',
-                FHIRBaseUrl: 'http://example.com'
+                fhirBaseUrl: 'http://example.com'
             });
 
             expect(job.jobId).to.be.a('string');
@@ -37,7 +37,7 @@ describe('Job', () => {
                 outputFormat: 'ndjson',
                 manifestUrl: 'http://example.com/manifest',
                 kickoffUrl: 'http://example.com/kickoff',
-                FHIRBaseUrl: 'http://example.com',
+                fhirBaseUrl: 'http://example.com',
                 fileRequestHeaders: {
                     'Authorization': 'Bearer token123'
                 }
@@ -56,7 +56,7 @@ describe('Job', () => {
                 outputFormat: 'ndjson',
                 manifestUrl: 'http://example.com/manifest',
                 kickoffUrl: 'http://example.com/kickoff',
-                FHIRBaseUrl: 'http://example.com',
+                fhirBaseUrl: 'http://example.com',
                 onError: errorCallback
             });
 
@@ -71,7 +71,7 @@ describe('Job', () => {
                 outputFormat: 'ndjson',
                 manifestUrl: 'http://example.com/manifest',
                 kickoffUrl: 'http://example.com/kickoff',
-                FHIRBaseUrl: 'http://example.com'
+                fhirBaseUrl: 'http://example.com'
             });
 
             // Manually set status to in-progress
@@ -86,7 +86,7 @@ describe('Job', () => {
                 outputFormat: 'ndjson',
                 manifestUrl: '',
                 kickoffUrl: 'http://example.com/kickoff',
-                FHIRBaseUrl: 'http://example.com'
+                fhirBaseUrl: 'http://example.com'
             });
 
             expect(() => job.start()).to.throw(`Job ${job.jobId} has no manifestUrl.`);
@@ -115,7 +115,7 @@ describe('Job', () => {
                 outputFormat: 'ndjson',
                 manifestUrl: 'http://example.com/manifest',
                 kickoffUrl: 'http://example.com/kickoff',
-                FHIRBaseUrl: 'http://example.com'
+                fhirBaseUrl: 'http://example.com'
             });
 
             // Start event should fire and change status
@@ -134,7 +134,7 @@ describe('Job', () => {
                 outputFormat: 'ndjson',
                 manifestUrl: 'http://example.com/manifest',
                 kickoffUrl: 'http://example.com/kickoff',
-                FHIRBaseUrl: 'http://example.com'
+                fhirBaseUrl: 'http://example.com'
             });
 
             // Check that all event handlers are bound methods
@@ -152,7 +152,7 @@ describe('Job', () => {
                 outputFormat: 'ndjson',
                 manifestUrl: 'http://example.com/manifest',
                 kickoffUrl: 'http://example.com/kickoff',
-                FHIRBaseUrl: 'http://example.com'
+                fhirBaseUrl: 'http://example.com'
             });
 
             expect(job.progress).to.equal(0);
@@ -171,7 +171,7 @@ describe('Job', () => {
                 outputFormat: 'ndjson',
                 manifestUrl: 'http://example.com/manifest',
                 kickoffUrl: 'http://example.com/kickoff',
-                FHIRBaseUrl: 'http://example.com'
+                fhirBaseUrl: 'http://example.com'
             });
 
             expect(job.status).to.equal('pending');
@@ -191,7 +191,7 @@ describe('Job', () => {
                 outputFormat: 'ndjson',
                 manifestUrl: 'http://example.com/manifest',
                 kickoffUrl: 'http://example.com/kickoff',
-                FHIRBaseUrl: 'http://example.com',
+                fhirBaseUrl: 'http://example.com',
                 onError: (err) => {
                     errorCallbackCalled = true;
                     capturedError = err;
@@ -213,7 +213,7 @@ describe('Job', () => {
                 outputFormat: 'ndjson',
                 manifestUrl: 'http://example.com/manifest',
                 kickoffUrl: 'http://example.com/kickoff',
-                FHIRBaseUrl: 'http://example.com'
+                fhirBaseUrl: 'http://example.com'
             });
 
             expect(job.status).to.equal('pending');
@@ -229,7 +229,7 @@ describe('Job', () => {
                 outputFormat: 'ndjson',
                 manifestUrl: 'http://example.com/manifest',
                 kickoffUrl: 'http://example.com/kickoff',
-                FHIRBaseUrl: 'http://example.com'
+                fhirBaseUrl: 'http://example.com'
             });
 
             expect(job.status).to.equal('pending');
@@ -247,7 +247,7 @@ describe('Job', () => {
                 outputFormat: 'ndjson',
                 manifestUrl: 'http://example.com/manifest',
                 kickoffUrl: 'http://example.com/kickoff',
-                FHIRBaseUrl: 'http://example.com'
+                fhirBaseUrl: 'http://example.com'
             });
 
             // downloadEventHandler just logs, no state changes to test
@@ -282,7 +282,7 @@ describe('Job', () => {
                 outputFormat: 'ndjson',
                 manifestUrl: 'http://example.com/manifest',
                 kickoffUrl: 'http://example.com/kickoff',
-                FHIRBaseUrl: 'http://example.com'
+                fhirBaseUrl: 'http://example.com'
             });
 
             job.start();
@@ -323,7 +323,7 @@ describe('Job', () => {
                 outputFormat: 'ndjson',
                 manifestUrl: 'http://example.com/manifest',
                 kickoffUrl: 'http://example.com/kickoff',
-                FHIRBaseUrl: 'http://example.com'
+                fhirBaseUrl: 'http://example.com'
             });
 
             // Spy on undoAll
@@ -355,7 +355,7 @@ describe('Job', () => {
                 outputFormat: 'ndjson',
                 manifestUrl: 'http://example.com/manifest',
                 kickoffUrl: 'http://example.com/kickoff',
-                FHIRBaseUrl: 'http://example.com'
+                fhirBaseUrl: 'http://example.com'
             });
 
             expect(job.progress).to.equal(0);
@@ -407,7 +407,7 @@ describe('Job', () => {
                 outputFormat: 'ndjson',
                 manifestUrl: 'http://example.com/manifest',
                 kickoffUrl: 'http://example.com/kickoff',
-                FHIRBaseUrl: 'http://example.com'
+                fhirBaseUrl: 'http://example.com'
             });
 
             let downloadCompleteCalled = false;

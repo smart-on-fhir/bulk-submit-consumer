@@ -60,23 +60,23 @@ class BulkDownloader extends EventEmitter
     private total: number = 0;
     private downloaded: number = 0;
     private destinationDir: string;
-    private FHIRBaseUrl: string;
+    private fhirBaseUrl: string;
     private fileRequestHeaders: Record<string, string>;
     private queue: JobQueue = new JobQueue();
     private isAborted: boolean = false;
 
     constructor({
         destinationDir,
-        FHIRBaseUrl,
+        fhirBaseUrl,
         fileRequestHeaders = {}
     }: {
         destinationDir: string,
-        FHIRBaseUrl: string,
+        fhirBaseUrl: string,
         fileRequestHeaders?: Record<string, string>
     }) {
         super();
         this.destinationDir = destinationDir;
-        this.FHIRBaseUrl = FHIRBaseUrl;
+        this.fhirBaseUrl = fhirBaseUrl;
         this.fileRequestHeaders = fileRequestHeaders;
         this.abortController = new AbortController();
         this.abortController.signal.addEventListener("abort", () => {
@@ -456,23 +456,23 @@ class BulkDownloader extends EventEmitter
 
         try {
             // Resolve relative URLs:
-            // - URLs starting with '/' are relative to FHIRBaseUrl
+            // - URLs starting with '/' are relative to fhirBaseUrl
             // - URLs starting with '.' are relative to the DocumentReference file URL
             // - Absolute URLs (starting with 'http') are used as-is
             let absoluteUrl: string;
             if (url.startsWith('http')) {
                 absoluteUrl = url;
             } else if (url.startsWith('/')) {
-                // Remove trailing slash from FHIRBaseUrl if present
-                const baseUrl = this.FHIRBaseUrl.replace(/\/$/, '');
+                // Remove trailing slash from fhirBaseUrl if present
+                const baseUrl = this.fhirBaseUrl.replace(/\/$/, '');
                 absoluteUrl = `${baseUrl}${url}`;
             } else if (url.startsWith('.')) {
                 // Relative to the DocumentReference file URL
                 const fileBase = new URL(fileUrl);
                 absoluteUrl = new URL(url, fileBase.href).href;
             } else {
-                // Default: treat as relative to FHIRBaseUrl
-                const baseUrl = this.FHIRBaseUrl.replace(/\/$/, '');
+                // Default: treat as relative to fhirBaseUrl
+                const baseUrl = this.fhirBaseUrl.replace(/\/$/, '');
                 absoluteUrl = `${baseUrl}/${url}`;
             }
             
