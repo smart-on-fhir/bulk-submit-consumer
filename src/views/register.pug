@@ -1,0 +1,121 @@
+doctype html
+html
+  head
+    meta(charset="utf-8")
+    meta(name="viewport" content="width=device-width, initial-scale=1.0")
+    title Register Client
+    link(rel="icon" type="image/svg+xml" href="/database-up.svg")
+    link(href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet")
+    link(href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet")
+    script(src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js")
+  body
+    .container.mx-auto.my-5(style="max-width: 800px;")
+        h1 Registration
+        p Register a client to get back a client ID
+        hr
+
+        form(method="post" action="/register" autocomplete="off" enctype="application/x-www-form-urlencoded")
+          
+          if error
+            .alert.alert-danger.border-0.mt-2
+              .row
+                .col.col-auto
+                  i.bi.bi-x-circle-fill.text-danger
+                .col= error
+          
+          .my-4
+            label.form-label.fw-semibold(for="clientName") Select JWKS:
+            select.form-control#type
+              option(value="https://bulk-data.smarthealthit.org/keys/ES384.public.json") Pre-registered ES384 (https://bulk-data.smarthealthit.org/keys/ES384.public.json)
+              option(value="https://bulk-data.smarthealthit.org/keys/RS384.public.json") Pre-registered RS384 (https://bulk-data.smarthealthit.org/keys/RS384.public.json)
+              option(value="use:jwks_url") Provide custom JWKS URL below
+              option(value="use:jwks") Provide custom JWKS below
+
+            input.form-control.mt-2(type="text" placeholder="Custom JWKS URL" name="jwks_url" style="display: none" value="https://bulk-data.smarthealthit.org/keys/ES384.public.json")
+            textarea.form-control.mt-2(placeholder="Public JWKS as JSON" name="jwks" rows="5" style="display: none; white-space: pre-wrap;font-family: monospace;tab-size: 4; font-size: 0.9em;")
+          button.btn.btn-primary(type="submit") Register
+
+        if token
+          br
+          hr
+          br
+          label.fw-semibold Registered Client ID:
+          .alert.alert-success.border-0.mt-2(style="word-break: break-all;font-family: monospace;")
+            | #{token}
+
+          label.fw-semibold Token URL:
+          .alert.alert-success.border-0.mt-2(style="word-break: break-all;font-family: monospace;")
+            | #{token_url}
+
+        .bg-warning-subtle.p-2.rounded.small.mt-4#info-message(style="display: none;")
+          .row
+            .col.col-auto
+              h4.bi.bi-info-circle
+            .col
+              h4 How to use pre-registered keys
+              p 
+                | Pre-registered keys are available at 
+                a(href="https://bulk-data.smarthealthit.org/keys/" target="_blank") https://bulk-data.smarthealthit.org/keys/
+                |. To authenticate, use the following steps:
+              ol
+                li
+                  | Depending on the selected key type, find the private json. Can be 
+                  a(href="https://bulk-data.smarthealthit.org/keys/ES384.private.json" target="_blank") https://bulk-data.smarthealthit.org/keys/ES384.private.json 
+                  | or 
+                  a(href="https://bulk-data.smarthealthit.org/keys/RS384.private.json" target="_blank") https://bulk-data.smarthealthit.org/keys/RS384.private.json
+                li
+                  | That json contains a pir of public and private keys. The private key is the one having 
+                  code "key_ops": ["sign"] 
+                  | in it. Use that key to sign your tokens!
+
+    script.
+      const jwks_url     = "#{jwks_url}";
+      const jwks         = "#{jwks}";
+      const jwksTextArea = document.querySelector('textarea[name="jwks"]');
+      const jwksUrlInput = document.querySelector('input[name="jwks_url"]');
+      const typeInput    = document.querySelector('#type');
+      const infoMessage  = document.querySelector('#info-message');
+
+      function onTypeChange() {
+        jwksTextArea.value = '';
+        jwksUrlInput.value = '';
+        infoMessage.style.display  = 'none';
+        if (typeInput.value === 'use:jwks') {
+          jwksTextArea.style.display = 'block';
+          jwksUrlInput.style.display = 'none';
+        } else if (typeInput.value === 'use:jwks_url') {
+          jwksTextArea.style.display = 'none';
+          jwksUrlInput.style.display = 'block';
+        } else {
+          jwksTextArea.style.display = 'none';
+          jwksUrlInput.style.display = 'none';
+          jwksUrlInput.value         = typeInput.value;
+          infoMessage.style.display  = 'block';
+        }
+      }
+
+      function initUI() {
+        infoMessage.style.display  = 'none';
+        if (jwks) {
+          jwksTextArea.value = jwks.replace(/&quot;/g, '"');
+          jwksTextArea.style.display = 'block';
+          typeInput.value = 'use:jwks';
+        }
+        else if (jwks_url) {
+          jwksTextArea.style.display = 'none';
+          jwksUrlInput.value = jwks_url;
+          if (jwks_url === "https://bulk-data.smarthealthit.org/keys/ES384.public.json" ||
+              jwks_url === "https://bulk-data.smarthealthit.org/keys/RS384.public.json") {
+            typeInput.value = jwks_url;
+            jwksUrlInput.style.display = 'none';
+            infoMessage.style.display  = 'block';
+          } else {
+            typeInput.value = 'use:jwks_url';
+            jwksUrlInput.style.display = 'block';
+          }
+        }
+      }
+      
+      initUI();
+      typeInput.addEventListener('change', onTypeChange);
+

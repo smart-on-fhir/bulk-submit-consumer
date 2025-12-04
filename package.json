@@ -37,6 +37,9 @@
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "jwk-to-pem": "^2.0.7",
+    "pug": "^3.0.3",
     "serve-index": "^1.9.1",
     "ts-node": "^10.9.2"
   },
@@ -46,6 +49,8 @@
     "@types/dotenv": "^6.1.1",
     "@types/express": "^5.0.3",
     "@types/fhir": "^0.0.41",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/jwk-to-pem": "^2.0.3",
     "@types/mocha": "^10.0.10",
     "@types/mock-fs": "^4.13.4",
     "@types/node": "^24.7.0",
