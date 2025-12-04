@@ -760,12 +760,8 @@ describe('BulkDownloader', () => {
 
         it('should accept valid FHIR resources', () => {
             const downloader = new BulkDownloader({ destinationDir: DOWNLOADS_DIR, FHIRBaseUrl: 'http://example.com' });
-            
-            expect(() => (downloader as any).validateResource({ resourceType: 'Patient', id: '123' }))
-                .to.not.throw();
-            
-            expect(() => (downloader as any).validateResource({ resourceType: 'Observation', id: 'obs-1' }))
-                .to.not.throw();
+            expect(() => (downloader as any).validateResource({ resourceType: 'Patient', id: '123' })).to.not.throw();
+            expect(() => (downloader as any).validateResource({ resourceType: 'Observation', id: 'obs-1' })).to.not.throw();
         });
     });
 

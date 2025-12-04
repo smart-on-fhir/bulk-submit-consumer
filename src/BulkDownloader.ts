@@ -485,8 +485,6 @@ class BulkDownloader extends EventEmitter
             // Create the documents directory if it doesn't exist
             await mkdir(documentsDir, { recursive: true });
 
-            console.log(`Downloading attachment from ${absoluteUrl} to ${filepath}. Headers: ${JSON.stringify(this.fileRequestHeaders)}`);
-
             // Download the file
             const { error, res } = await request(absoluteUrl, {
                 headers: this.fileRequestHeaders,
@@ -542,7 +540,7 @@ class BulkDownloader extends EventEmitter
         if (!resource.id || typeof resource.id !== 'string') {
             throw new Error("Resource ID is missing or invalid");
         }
-        if (file.type && resource.resourceType !== file.type) {
+        if (file?.type && resource.resourceType !== file.type) {
             throw new Error(`Resource type ${resource.resourceType} does not match expected type ${file.type}`);
         }
     }
