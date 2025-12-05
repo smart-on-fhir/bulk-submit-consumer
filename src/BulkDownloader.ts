@@ -82,6 +82,10 @@ class BulkDownloader extends EventEmitter
         this.abortController.signal.addEventListener("abort", () => {
             this.emit("abort")
         });
+
+        // Make sure we have at least one listener for "error" to avoid
+        // uncaught exceptions from EventEmitter
+        this.on("error", () => { /* noop */ });
     }
 
     get status() {

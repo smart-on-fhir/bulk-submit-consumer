@@ -78,7 +78,8 @@ export class Submission {
 
     async start() {
         this.jobs.forEach((job) => {
-            if (job.status === 'pending' || job.status === 'failed' || job.status === 'aborted') {
+            if (job.status === 'pending' || job.status === 'aborted') {
+                job.removeEventListeners();
                 job.start();
             }
         });

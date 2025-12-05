@@ -114,23 +114,31 @@ export class Job {
             throw new Error(`Job ${this.jobId} has no manifestUrl.`);
         }
 
+        this.addEventListeners();
+        this.downloader.run(this.manifestUrl);
+    }
+
+    abort() {
+        this.downloader.abort();
+        this.removeEventListeners();
+        this.downloader.undoAll(this.manifestUrl)
+    }
+
+    addEventListeners() {
         this.downloader.on("progress"        , this.progressEventHandler);
         this.downloader.on("complete"        , this.completeEventHandler);
         this.downloader.on("abort"           , this.abortEventHandler   );
         this.downloader.on("start"           , this.startEventHandler   );
         this.downloader.on("downloadComplete", this.downloadEventHandler);
         this.downloader.on("error"           , this.errorEventHandler   );
-        this.downloader.run(this.manifestUrl);
     }
 
-    abort() {
-        this.downloader.abort();
+    removeEventListeners() {
         this.downloader.off('progress'        , this.progressEventHandler);
         this.downloader.off('complete'        , this.completeEventHandler);
         this.downloader.off('abort'           , this.abortEventHandler   );
         this.downloader.off('start'           , this.startEventHandler   );
         this.downloader.off('downloadComplete', this.downloadEventHandler);
         this.downloader.off('error'           , this.errorEventHandler   );
-        this.downloader.undoAll(this.manifestUrl)
     }
 }

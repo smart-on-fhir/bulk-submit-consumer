@@ -28,7 +28,7 @@ export default async function bulkStatusHandler(req: Request, res: Response): Pr
 
     // Only return a manifest when the submission is in "complete" status and
     // all files have been processed (i.e. progress === 100) 
-    if (submission.status === 'complete' && submission.progress === 100) {
+    if (submission.status === 'complete' && submission.progress >= 100) {
         res.status(200).json(submission.statusManifest.toJSON());
         return;
     }
