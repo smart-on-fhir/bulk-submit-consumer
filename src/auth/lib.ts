@@ -69,11 +69,11 @@ export async function getPublicKeys({ jwks_url, jwks, kid }: {
     return publicKeys;
 }
 
-async function fetchJson(input: string | URL | globalThis.Request, options?: RequestInit) {
+export async function fetchJson(input: string | URL | globalThis.Request, options?: RequestInit) {
     return fetch(input, options).then(res => res.json())
 }
 
-async function fetchJwksUrl(input: string | URL | globalThis.Request, options?: RequestInit) {
+export async function fetchJwksUrl(input: string | URL | globalThis.Request, options?: RequestInit) {
     return fetchJson(input, options).then(json => {
         if (!Array.isArray(json.keys)) {
             throw new Error("The remote jwks object has no keys array.")
@@ -105,9 +105,7 @@ export function requireUrlEncodedPost(req: Request) {
 export function checkAuth(req: Request, res: Response, next: NextFunction) {
     if (req.headers.authorization) {
         const [authType, credentials] = req.headers.authorization.split(" ");
-
         try {
-
             // Authenticating with JWT token. In this case, the token contains
             // the registered client.
             if (authType.toLowerCase() === "bearer") {
@@ -117,24 +115,10 @@ export function checkAuth(req: Request, res: Response, next: NextFunction) {
                     JWT_SECRET,
                     { algorithms: ["HS256"] } // We use HS256 for signing access tokens
                 ) as any;
-
                 const client = jwt.decode(token.client_id);
                 (req as any).registeredClient = client;
             }
-            
-            // Authenticating with Basic auth
-            else if (authType.toLowerCase() === "basic") {
-                // Handle Basic auth
-                const decoded = Buffer.from(credentials, "base64").toString("utf-8");
-                const [username, password] = decoded.split(":");
-
-                if (!username || !password) {
-                    throw new Error("Invalid Basic auth credentials");
-                }
-
-                // Attach the username and password to the request for further validation
-                (req as any).basicAuth = { username, password };
-            } else {
+            else {
                 throw new Error("Unsupported authorization type");
             }
         } catch (e) {

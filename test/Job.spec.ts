@@ -265,12 +265,12 @@ describe('Job', () => {
             });
 
             const mockManifest = {
-                transactionTime: "2025-01-01T00:00:00Z",
-                request: "http://example.com/export",
+                transactionTime    : "2025-01-01T00:00:00Z",
+                request            : "http://example.com/export",
                 requiresAccessToken: true,
-                output: [],
-                error: [],
-                deleted: []
+                output             : [],
+                error              : [],
+                deleted            : []
             };
 
             nock('http://example.com')
@@ -280,9 +280,9 @@ describe('Job', () => {
             const job = new Job({
                 submissionId: 'sub-123',
                 outputFormat: 'ndjson',
-                manifestUrl: 'http://example.com/manifest',
-                kickoffUrl: 'http://example.com/kickoff',
-                fhirBaseUrl: 'http://example.com'
+                manifestUrl : 'http://example.com/manifest',
+                kickoffUrl  : 'http://example.com/kickoff',
+                fhirBaseUrl : 'http://example.com'
             });
 
             job.start();
@@ -294,9 +294,11 @@ describe('Job', () => {
             job.abort();
 
             // After abort, listeners should be removed
-            expect(job.downloader.listenerCount('progress')).to.equal(0);
-            expect(job.downloader.listenerCount('complete')).to.equal(0);
-            expect(job.downloader.listenerCount('error')).to.equal(0);
+            expect(job.downloader.listenerCount('progress'), 'progress listeners not removed').to.equal(0);
+            expect(job.downloader.listenerCount('complete'), 'complete listeners not removed').to.equal(0);
+
+            // Note that one internal listener remains to prevent the process from crashing on error
+            expect(job.downloader.listenerCount('error')   , 'error listeners not removed'   ).to.equal(1);
         });
 
         it('should call undoAll on the downloader', (done) => {
