@@ -24,8 +24,8 @@ html
                 .col= error
           
           .my-4
-            label.form-label.fw-semibold(for="clientName") Select JWKS:
-            select.form-control#type
+            label.form-label.fw-semibold(for="type") Select JWKS:
+            select.form-control#type(style="appearance: auto; padding: .4723rem .6rem !important" name="type" required)
               option(value="https://bulk-data.smarthealthit.org/keys/ES384.public.json") Pre-registered ES384 (https://bulk-data.smarthealthit.org/keys/ES384.public.json)
               option(value="https://bulk-data.smarthealthit.org/keys/RS384.public.json") Pre-registered RS384 (https://bulk-data.smarthealthit.org/keys/RS384.public.json)
               option(value="use:jwks_url") Provide custom JWKS URL below
