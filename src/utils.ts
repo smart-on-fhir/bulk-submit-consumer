@@ -162,7 +162,7 @@ export async function request(
                 const contentType = out.res.headers.get('content-type') || ''; 
                 if (contentType.includes('application/json')) {
                     out.response.body = await out.res.json();
-                } else if (contentType.includes('application/ndjson') || contentType.includes('ndjson')) {
+                } else if (contentType.includes('application/ndjson') || contentType.includes('ndjson') || contentType.includes('application/octet-stream')) {
                     out.response.body = streamNDJSON(out.res);
                 } else {
                     out.response.body = await out.res.text();

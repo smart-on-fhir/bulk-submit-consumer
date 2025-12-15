@@ -1,6 +1,6 @@
 import { createWriteStream, existsSync } from "fs"
 import { mkdir, unlink }                 from "fs/promises"
-import { basename, join }                from "path"
+import { basename, dirname, join }                from "path"
 import { EventEmitter }                  from "events"
 import { Resource }                      from "fhir/r4"
 import { request }                       from "./utils"
@@ -312,7 +312,7 @@ class BulkDownloader extends EventEmitter
 
                 // If the resource is DocumentReference, download the actual document too
                 if (obj.resourceType === 'DocumentReference') {
-                    await this.downloadDocumentReferenceAttachments(obj, subfolder, file.url);
+                    await this.downloadDocumentReferenceAttachments(obj, subfolder, fileUrl.href);
                 }
             }
             writeStream.end();
