@@ -7,7 +7,7 @@ import { Job }                    from "./Job";
 import { BASE_URL }               from "./config";
 
 
-const log = debuglog("app:bulkSubmitHandler");
+const log = debuglog("app:bulkSubmit");
 
 /**
  * System of http://hl7.org/fhir/uv/bulkdata/ValueSet/submission-status, code of

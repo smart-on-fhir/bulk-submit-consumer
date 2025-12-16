@@ -9,7 +9,7 @@ import {
 } from "./config";
 
 
-const debug = debuglog("app:db");
+const debug = debuglog("app:bulkSubmit");
 
 /**
  * Used to look up submissions in the in-memory database by submissionId and

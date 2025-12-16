@@ -3,7 +3,7 @@ import { randomUUID } from "crypto";
 import BulkDownloader from "./BulkDownloader";
 
 
-const debug = debuglog("app:Job")
+const debug = debuglog("app:bulkSubmit")
 
 export interface JobDescriptor {
     submissionId: string;
