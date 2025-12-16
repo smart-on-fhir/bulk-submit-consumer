@@ -1,6 +1,6 @@
 import { createWriteStream, existsSync } from "fs"
 import { mkdir, unlink }                 from "fs/promises"
-import { basename, dirname, join }                from "path"
+import { basename, join }                from "path"
 import { EventEmitter }                  from "events"
 import { Resource }                      from "fhir/r4"
 import { request }                       from "./utils"
